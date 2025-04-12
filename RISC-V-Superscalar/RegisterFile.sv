@@ -3,26 +3,32 @@ module RF#(
 	parameter RD = 32
 	
 	)(
-	input logic [RS-1:0]rs1,
-	input logic [RS-1:0]rs2,
-	input logic [RS-1:0]rd,
-	input logic [RD-1:0]wd,
-	
 	input logic clk,
 	input logic rst,
-	input logic write_en,
+
+	input logic [RS-1:0]rs1[1:0],
+	input logic [RS-1:0]rs2[1:0],
+	input logic [RS-1:0]rd[1:0],
+	input logic [RD-1:0]wd[1:0],
 	
-	output logic [RD-1:0]rd1,
-	output logic [RD-1:0]rd2
+	input logic write_en[1:0],
 	
-);	
-	reg [31:0]reg_data[31:0];// first[31:0] refeer to  register
+	output logic [RD-1:0]rd1[1:0],
+	output logic [RD-1:0]rd2[1:0]
 	
-	assign rd1 = reg_data[rs1];
-	assign rd2 = reg_data[rs2];
+	);	
+
+	logic [31:0]reg_data[31:0];// first[31:0] refeer to  register
+	logic [31:0]temp_reg_data[31:0];// first[31:0] refeer to  register
+	
+	assign rd1[0] = reg_data[rs1][0];
+	assign rd1[1] = reg_data[rs1][1];
+
+	assign rd2[0] = reg_data[rs2][0];
+	assign rd2[1] = reg_data[rs2][1];
 	
 	
-	always_ff @(negedge clk or negedge rst) 
+	always_ff @(negedge clk , negedge rst) 
 	begin
 		
 		reg_data[0] <= 1'b0;
@@ -46,13 +52,14 @@ module RF#(
 				end
 				else
 				begin
-					reg_data[rd] <= wd;
+					reg_data[rd[0]] <= wd[0];
+					reg_data[rd[1]] <= wd[1];
 				end
 			end    
 			
 			else  
 			begin 
-				reg_data <= reg_data;
+				temp_reg_data <= reg_data;
 			end
 		end
 	end

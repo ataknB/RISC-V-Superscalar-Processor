@@ -3,7 +3,7 @@ parameter InstLength = 256,
 parameter IMemInitFile = "imem.mem" 
     )(
     input  logic [31:0]Program_counter_IM,
-    output  logic [31:0]Instruction_IM
+    output  logic [31:0]Instruction_IM[1:0],
     //TRAP HANDLING
 	/*
     output reg exception_flag_IM,
@@ -24,7 +24,8 @@ parameter IMemInitFile = "imem.mem"
 	assign Address = {2'b00, Program_counter_IM[31:2]};
 
 	
-	assign Instruction_IM = Instraction_Memory[Address];
+	assign Instruction_IM[0] = Instraction_Memory[Address];
+	assign Instruction_IM[1] = Instraction_Memory[Address+32'd4];
 	
 	
 endmodule

@@ -94,8 +94,8 @@ module Processor_Top #(
 	//assign PC_out_F = x + 32'd4;
 	
 	//logic [WIDTH-1:0]InstructionMemory_out;
-	logic [WIDTH-1:0]InstructionMemory_out_F;
-	logic [WIDTH-1:0]InstructionMemory_out_DE;
+	logic [WIDTH-1:0]InstructionMemory_out_F[1:0];
+	logic [WIDTH-1:0]InstructionMemory_out_DE[1:0];
 
 	Instruction_Memory Instruction_Memory_(
         .Program_counter_IM(PC_out_F),          
@@ -103,12 +103,12 @@ module Processor_Top #(
     );
 	
 	//BP STAGE
-	logic BP_en_F;
-	logic BP_en_DE;
-	logic BP_en_EX;
+	logic BP_en_F[1:0];
+	logic BP_en_DE[1:0];
+	logic BP_en_EX[1:0];
 
 
-	logic [31:0]BP_imm;
+	logic [31:0]BP_imm[1:0];
 
 	Fetch_Decoder Fetch_Decoder(
 		.inst(InstructionMemory_out_F),
@@ -118,7 +118,7 @@ module Processor_Top #(
 	);	
 
 	logic [31:0]Branch_Calculation_Kogge_Stone;
-
+	//Buraya hangi instructionun branchinin alınacağı seçilecek
 	Kogge_Stone Branch_Calculation(
 		.in0(PC_out_F),
 		.in1(BP_imm),
@@ -166,7 +166,7 @@ module Processor_Top #(
 	assign BP_decision_F = (Loop_Decision) ? Loop_Decision : Gshare_Decision;
 
 //////////////////////////////////////////////////		
-	Decode_Register Decode_Reg_(
+	Decode_Register Decode_Reg(
         .clk                    (clk),
         .rst                    (rst),
         .normal_F               (normal_F),
@@ -184,29 +184,31 @@ module Processor_Top #(
         .PC_out_DE              (PC_out_DE),
         .InstructionMemory_out_DE(InstructionMemory_out_DE)
     );
+
+	
 //////////////////////////////////////////////////
 	
 	
-	logic [4:0]op_code;
-	logic [3:0]sub_op_code;
+	logic [4:0]op_code[1:0];
+	logic [3:0]sub_op_code[1:0];
 	
-	logic [WIDTH-1:0]imm_decoded;
+	logic [WIDTH-1:0]imm_decoded[1:0];
 	
 	//logic [4:0]shift_size;
-	logic [4:0]shift_size_DE;
-	logic [4:0]shift_size_EX;
+	logic [4:0]shift_size_DE[1:0];
+	logic [4:0]shift_size_EX[1:0];
 	
-	logic [4:0]rs1_DE;
-	logic [4:0]rs1_EX;
+	logic [4:0]rs1_DE[1:0];
+	logic [4:0]rs1_EX[1:0];
 	
-	logic [4:0]rs2_DE;
-	logic [4:0]rs2_EX;
+	logic [4:0]rs2_DE[1:0];
+	logic [4:0]rs2_EX[1:0];
 	
 	//logic [4:0]rd;
-	logic [4:0]rd_DE;
-	logic [4:0]rd_EX;
-	logic [4:0]rd_MEM;
-	logic [4:0]rd_WB;
+	logic [4:0]rd_DE[1:0];
+	logic [4:0]rd_EX[1:0];
+	logic [4:0]rd_MEM[1:0];
+	logic [4:0]rd_WB[1:0];
 
 	Decoder Decoder_(
         .inst(InstructionMemory_out_DE),
@@ -222,47 +224,47 @@ module Processor_Top #(
         .shift_size(shift_size_DE)
     );
 	
-	logic imm_en;
+	logic imm_en[1:0];
 	
 	//logic rf_write_en;
-	logic rf_write_en_DE;
-	logic rf_write_en_EX;
-	logic rf_write_en_MEM;
-	logic rf_write_en_WB;
+	logic rf_write_en_DE[1:0];
+	logic rf_write_en_EX[1:0];
+	logic rf_write_en_MEM[1:0];
+	logic rf_write_en_WB[1:0];
 	
 	//logic mem_read_en;
-	logic mem_read_en_DE;
-	logic mem_read_en_MEM;
+	logic mem_read_en_DE[1:0];
+	logic mem_read_en_MEM[1:0];
 	
 	//logic mem_write_en;
-	logic mem_write_en_DE;
-	logic mem_write_en_EX;
-	logic mem_write_en_MEM;
+	logic mem_write_en_DE[1:0];
+	logic mem_write_en_EX[1:0];
+	logic mem_write_en_MEM[1:0];
 	
-	logic sign_extender_en_DE;
-	logic sign_extender_en_EX;
+	logic sign_extender_en_DE[1:0];
+	logic sign_extender_en_EX[1:0];
 	
-	logic sign_extender_type;
+	logic sign_extender_type[1:0];
 	
 	//logic [3:0]alu_op;
-	logic [3:0]alu_op_DE;
-	logic [3:0]alu_op_EX;
+	logic [3:0]alu_op_DE[1:0];
+	logic [3:0]alu_op_EX[1:0];
 	
 	//logic JAL_en;
-	logic JAL_en_DE;
-	logic JAL_en_EX;
+	logic JAL_en_DE[1:0];
+	logic JAL_en_EX[1:0];
 	
 	//logic JALR_en;
-	logic JALR_en_DE;
-	logic JALR_en_EX;
+	logic JALR_en_DE[1:0];
+	logic JALR_en_EX[1:0];
 	
 	
 	//load_type
-	logic [2:0]load_type_DE;
-	logic [2:0]load_type_EX;
-	logic [2:0]load_type_MEM;
+	logic [2:0]load_type_DE[1:0];
+	logic [2:0]load_type_EX[1:0];
+	logic [2:0]load_type_MEM[1:0];
 	
-	logic [1:0]store_type;
+	logic [1:0]store_type[1:0];
 	
 	Control_Unit Control_Unit_(
         .op_code(op_code),
@@ -283,18 +285,18 @@ module Processor_Top #(
         .alu_op(alu_op_DE)
     );
 	
-	logic [WIDTH-1:0]rd1;
-	logic [WIDTH-1:0]rd1_DE;
-	logic [WIDTH-1:0]rd1_EX;
+	logic [WIDTH-1:0]rd1[1:0];
+	logic [WIDTH-1:0]rd1_DE[1:0];
+	logic [WIDTH-1:0]rd1_EX[1:0];
 	
-	logic [WIDTH-1:0]rd2;
-	logic [WIDTH-1:0]rd2_DE;
-	logic [WIDTH-1:0]rd2_EX;
-	logic [WIDTH-1:0]rd2_MEM;
+	logic [WIDTH-1:0]rd2[1:0];
+	logic [WIDTH-1:0]rd2_DE[1:0];
+	logic [WIDTH-1:0]rd2_EX[1:0];
+	logic [WIDTH-1:0]rd2_MEM[1:0];
 	
 	//logic [WIDTH-1:0]wd;
-	logic [WIDTH-1:0]wd_MEM;
-	logic [WIDTH-1:0]wd_WB;
+	logic [WIDTH-1:0]wd_MEM[1:0];
+	logic [WIDTH-1:0]wd_WB[1:0];
 	
 	
 	RF RF_(
@@ -312,8 +314,8 @@ module Processor_Top #(
     );
 
 	//logic [WIDTH-1:0]imm_sign_extender_out;
-	logic [WIDTH-1:0]imm_sign_extender_out_DE;
-	logic [WIDTH-1:0]imm_sign_extender_out_EX;
+	logic [WIDTH-1:0]imm_sign_extender_out_DE[1:0];
+	logic [WIDTH-1:0]imm_sign_extender_out_EX[1:0];
 
 	Sign_Extender Sign_Extender_(
         .in(imm_decoded),
@@ -324,21 +326,33 @@ module Processor_Top #(
 		
         .imm_out(imm_sign_extender_out_DE)
     );
-	
+	//////////////////////////////////
+	//YENİ PİPE EKLE 
 	//logic [WIDTH-1:0]alu_in1; 
-	logic [WIDTH-1:0]alu_in1_DE; 
-	logic [WIDTH-1:0]alu_in1_EX; 
-	assign rd1_DE = (JAL_en_DE) ? (PC_out_DE) : (rd1); 
+	logic [WIDTH-1:0]alu_in1_DE[1:0]; 
+	logic [WIDTH-1:0]alu_in1_EX[1:0]; 
+
+	assign rd1_DE[0] = JAL_en_DE[0] ? PC_out_DE[0] : rd1[0]; // İlk talimat için atama
+	assign rd1_DE[1] = JAL_en_DE[1] ? PC_out_DE[1] : rd1[1]; // İkinci talimat için atama
 	
 	//logic [WIDTH-1:0]alu_in2;
 		
-	assign  rd2_DE = 	(store_type == 2'b00) ? rd2 					:						
-						(store_type == 2'b01) ? {{24{1'b0}}, rd2[7:0]}  : 
-						(store_type == 2'b10) ? {{16{1'b0}}, rd2[15:0]} :
-						(store_type == 2'b11) ? rd2 : 32'd0;	
+	// rd2_DE[0] için atama: store_type[0]'a bağlı olarak rd2[0]'ı genişlet veya doğrudan ata
+	assign rd2_DE[0] = (store_type[0] == 2'b00) ? rd2[0] :                    // NA: rd2[0]'ı doğrudan kullan
+					(store_type[0] == 2'b01) ? {{24{1'b0}}, rd2[0][7:0]} : // sb: alt 8 bit, üstüne 24 sıfır
+					(store_type[0] == 2'b10) ? {{16{1'b0}}, rd2[0][15:0]} : // sh: alt 16 bit, üstüne 16 sıfır
+					(store_type[0] == 2'b11) ? rd2[0] :                    // sw: rd2[0]'ı doğrudan kullan
+					32'd0;                                                 // Varsayılan: sıfır
+
+	// rd2_DE[1] için atama: store_type[1]'e bağlı olarak rd2[1]'i genişlet veya doğrudan ata
+	assign rd2_DE[1] = (store_type[1] == 2'b00) ? rd2[1] :                    // NA: rd2[1]'i doğrudan kullan
+					(store_type[1] == 2'b01) ? {{24{1'b0}}, rd2[1][7:0]} : // sb: alt 8 bit, üstüne 24 sıfır
+					(store_type[1] == 2'b10) ? {{16{1'b0}}, rd2[1][15:0]} : // sh: alt 16 bit, üstüne 16 sıfır
+					(store_type[1] == 2'b11) ? rd2[1] :                    // sw: rd2[1]'i doğrudan kullan
+					32'd0;                                                 // Varsayılan: sıfır
 
 	/////////////////////////////////////////////////
-	Execute_Register Execute_Register_(
+	Execute_Register Execute_Register(
         .clk(clk),
         .rst(rst),
 		
