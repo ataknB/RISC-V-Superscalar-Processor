@@ -1,82 +1,102 @@
-module Processor_Top #(
-	parameter WIDTH = 32
-	)(
-	input logic rst,
-	input logic clk
-);
+module Core_Top #(
+	parameter WIDTH = 32,
+	parameter RS = 5,
+	parameter IMM = 32,
+	parameter SUB_OPCODE = 4,
+	parameter LOAD_TYPE  = 3,
+	parameter ALU_OP = 4
+	parameter FORWARD_MODE = 2
 
-	//logic [WIDTH-1:0]jump; 
-	logic [WIDTH-1:0]jump_EX; 
-	logic [WIDTH-1:0]jump_MEM; 
-	
-	//logic [WIDTH-1:0]branch_;
-	logic [WIDTH-1:0]branch_EX;
-	logic [WIDTH-1:0]branch_MEM;
-	
-	//logic [WIDTH-1:0]normal;
-	logic [WIDTH-1:0]normal_F;
-	logic [WIDTH-1:0]normal_DE;
-	logic [WIDTH-1:0]normal_EX;
-	logic [WIDTH-1:0]normal_MEM;
-	logic [WIDTH-1:0]normal_WB;
+	)(
+	input logic clk,
+	input logic rst,
+	);
+
+	logic [WIDTH-1:0] Jump_Addr_Ex;
+	logic [WIDTH-1:0] Jump_Addr_Mem;
+
+	logic [WIDTH-1:0] Branch_Addr_Ex;
+	logic [WIDTH-1:0] Branch_Addr_Mem;
+
+	logic [WIDTH-1:0] Normal_Addr_Fetch;
+	logic [WIDTH-1:0] Normal_Addr_Dec;
+	logic [WIDTH-1:0] Normal_Addr_Issue;
+	logic [WIDTH-1:0] Normal_Addr_Ex;
+	logic [WIDTH-1:0] Normal_Addr_Mem;
 
 	logic [WIDTH-1:0]PC_in;
-	
-	//logic [WIDTH-1:0]PC_out;
-	logic [WIDTH-1:0]PC_out_F;
-	logic [WIDTH-1:0]PC_out_DE;
-	logic [WIDTH-1:0]PC_out_EX;
-	logic [WIDTH-1:0]PC_out_MEM;
-	logic [WIDTH-1:0]PC_out_WB;
-	
-	//logic [1:0]program_counter_controller;
-	logic [1:0]program_counter_controller_DE;
-	logic [1:0]program_counter_controller_EX;
-	logic [1:0]program_counter_controller_MEM;
-	logic [1:0]program_counter_controller_WB;
-	
-	//logic alu_branch_control;
-	logic alu_branch_control_EX;
-	logic alu_branch_control_MEM;
-	
-	//logic branch_en;
-	logic branch_en;
-	
-	//Hazard Signals
-	logic stall_F;
-	logic stall_DE;
-	logic flush_EX;
-	
-	logic [1:0]forward_mode_rs2;
-	logic [1:0]forward_mode_rs1;
-	
-	assign branch_en = alu_branch_control_MEM && program_counter_controller_MEM[1] && program_counter_controller_MEM[0];
-	
-	//Bp signals
-	logic BP_decision_F;
-	logic BP_decision_DE;
-	logic BP_decision_EX;
 
-	Kogge_Stone PC_Increment(
-		.in0(PC_out_F),
+	logic [WIDTH-1:0]PC_out_Fetch;
+	logic [WIDTH-1:0]PC_out_Dec;
+	logic [WIDTH-1:0]PC_out_EX;
+	logic [WIDTH-1:0]PC_out_Issue;
+	logic [WIDTH-1:0]PC_out_Mem;
+	logic [WIDTH-1:0]PC_out_Wb;
+
+	logic [1:0]PC_MUX_Controller;
+
+	//DATA HAZARD SIGNALS
+	logic [1:0]Stall_Fetch;
+	logic [1:0]Stall_Dec;
+	logic [1:0]Stall_Issue;
+	logic [1:0]Flush_Ex;
+
+	logic Stall_Issue_Branch_Pipeline;
+	logic Stall_Issue_Memory_Pipeline;
+
+	logic Forwarding_Mode_rs1_Branch_Pipeline;
+	logic Forwarding_Mode_rs1_Memory_Pipeline;
+
+	logic Forwarding_Mode_rs2_Branch_Pipeline;
+	logic Forwarding_Mode_rs2_Memory_Pipeline;
+
+	//BP SIGNALS
+	logic [1:0]BP_en_Fetch;
+	logic BP_en_Dec;
+	logic BP_en_Issue;
+	logic BP_en_Ex;
+
+	logic BP_Decision_Fetch;
+	logic BP_Decision_Dec;
+	logic BP_Decision_Issue;
+	logic BP_Decision_Ex;
+
+	logic [WIDTH-1:0]BP_imm;
+
+	logic Branch_Predictor_Feedback;
+
+	logic [WIDTH-1:0]BP_Address;
+	logic Branch_en_Ex;
+	logic Branch_En;
+
+	logic ALU_Branch_Decision_Ex;
+	logic ALU_Branch_Decision_Mem;
+
+	logic Loop_Detector_en;
+	logic Loop_Decision;
+
+	logic Branch_Correction
+
+
+
+	Kogge_Stone PC_Incrementor(
+		.in0(PC_out_Fetch),
 		.in1(32'd4),
 		.sub_en(1'b0),
-		.out(normal_F)
+		.out(Normal_Addr_Fetch)
 	);
-	
-	logic branch_correction;
 
 	MUX_PC MUX_PC(
-		.jump(jump_EX),
-		.branch(Branch_Calculation_Kogge_Stone),//branch_MEM
-		.normal_F(normal_F),
-		.normal_EX(normal_EX),
+		.jump(Jump_Addr_Ex),
+		.branch(BP_Address),//branch_MEM
+		.normal_F(Normal_Addr_Fetch),
+		.normal_EX(Normal_Addr_Ex),
 		
-		.branch_correction(branch_correction),
+		.branch_correction(Branch_Correction),
 
-		.program_counter_controller(program_counter_controller_EX),
-		.branch_en_F(BP_decision_F),
-		.branch_en_EX(branch_en_EX),
+		.program_counter_controller(PC_MUX_Controller),
+		.branch_en_F(BP_Decision_Fetch),
+		.branch_en_EX(Branch_en_Ex),
 		
 		.out(PC_in)
 	);
@@ -85,540 +105,463 @@ module Processor_Top #(
 		.clk(clk),
 		.rst(rst),
 		
-		.stall_F(stall_F),
+		.stall_F(stall_Fetch),
 		
 		.PC_in(PC_in),
-		.PC_out(PC_out_F)
+		.PC_out(etch)
 	);
-	
-	//assign PC_out_F = x + 32'd4;
-	
-	//logic [WIDTH-1:0]InstructionMemory_out;
-	logic [WIDTH-1:0]InstructionMemory_out_F[1:0];
-	logic [WIDTH-1:0]InstructionMemory_out_DE[1:0];
 
-	Instruction_Memory Instruction_Memory_(
-        .Program_counter_IM(PC_out_F),          
-        .Instruction_IM(InstructionMemory_out_F)     
+	logic [WIDTH-1:0]InstructionMemory_out_Fetch[1:0];
+	logic [WIDTH-1:0]InstructionMemory_out_Dec[1:0];
+
+
+	//Her zaman Instruction 1 En son Instructiondir.
+	Instruction_Memory Instruction_Memory(
+        .Program_counter_IM(PC_out_Fetch),          
+        .Instruction_IM(InstructionMemory_out_Fetch)     
     );
-	
-	//BP STAGE
-	logic BP_en_F[1:0];
-	logic BP_en_DE[1:0];
-	logic BP_en_EX[1:0];
-
-
-	logic [31:0]BP_imm[1:0];
 
 	Fetch_Decoder Fetch_Decoder(
-		.inst(InstructionMemory_out_F),
-		.branch_en(BP_en_F),
+		.inst(InstructionMemory_out_Fetch),
+		.branch_en(BP_en_Fetch),
 		.imm_out(BP_imm)
-
-	);	
-
-	logic [31:0]Branch_Calculation_Kogge_Stone;
-	//Buraya hangi instructionun branchinin alınacağı seçilecek
-	Kogge_Stone Branch_Calculation(
-		.in0(PC_out_F),
-		.in1(BP_imm),
-		.sub_en(1'b0),
-		.out(Branch_Calculation_Kogge_Stone)
 	);
 
-	logic Gshare_Decision;
+	Kogge_Stone Branch_Address_Calculator(
+		.in0(PC_out_Fetch),
+		.in1(BP_imm),
+		.sub_en(1'b0),
+		.out(BP_Address)
+	);
 
-	Gshare_BP Gshare_BP(
+	Gshare_BP Gshare(
 		.clk(clk),
 		.rst(rst),
 
-		.branch_en_F(BP_en_F),
-		.branch_en_EX(BP_en_EX),
+		.branch_en_F(BP_en_Fetch),
+		.branch_en_EX(BP_en_Ex),
 
-		.PC_F(PC_out_F[13:0]),
-		.PC_EX(PC_out_EX[13:0]),
+		.PC_F(PC_out_Fetch[13:0]),
+		.PC_EX(PC_out_Ex[13:0]),
 
-		.branch_result(alu_branch_control_EX),
-		.BP_decision(Gshare_Decision /*BP_decision_F*/)
+		.branch_result(Branch_Predictor_Feedback),
+		.BP_decision(BP_Decision_Fetch)
 
 	);
-
-	logic LD_en;
-	logic Loop_Decision;
 
 	LoopDetector LoopDetector(
 		.clk(clk),
 		.rst(rst),
 
-		.PC_F(PC_out_F),
-		.PC_EX(PC_out_EX),
-		.PC_destination(Branch_Calculation_Kogge_Stone),
+		.PC_F(PC_out_Fetch),
+		.PC_EX(PC_out_Ex),
+		.PC_destination(BP_Address),
 
-		.branch_en_F(BP_en_F),
-		.branch_en_EX(BP_en_EX),
+		.branch_en_F(BP_en_Fetch),
+		.branch_en_EX(BP_en_Ex),
 
-		.feedback_from_ALU(alu_branch_control_EX),
+		.feedback_from_ALU(Branch_Predictor_Feedback),
 
 		.loop_decision(Loop_Decision),
-		.LD_en(LD_en)
+		.LD_en(Loop_Detector_en)
 	);
-	
-	assign BP_decision_F = (Loop_Decision) ? Loop_Decision : Gshare_Decision;
 
-//////////////////////////////////////////////////		
-	Decode_Register Decode_Reg(
-        .clk                    (clk),
-        .rst                    (rst),
-        .normal_F               (normal_F),
-        .PC_out_F               (PC_out_F),
-        .InstructionMemory_out_F(InstructionMemory_out_F),
-		.BP_decision_F			(BP_decision_F),
-		.BP_en_F				(BP_en_F),
+	//-----------DECODE PIPELINE STAGE------------------//
+	//--------------------------------------------------//
 
-        .stall_DE               (stall_DE),
-		.flush_DE				(flush_DE),
+	//Decoder Signals
+	logic [RS-1:0]OP_Code[1:0];
+	logic [SUB_OPCODE-1:0]Sub_OP_Code[1:0];
 
-		.BP_en_DE				(BP_en_DE),
-		.BP_decision_DE			(BP_decision_DE),
-        .normal_DE              (normal_DE),
-        .PC_out_DE              (PC_out_DE),
-        .InstructionMemory_out_DE(InstructionMemory_out_DE)
+	logic [WIDTH-1:0]Imm_Decoded[1:0];
+
+	logic [RS-1:0]Shift_Size_Dec[1:0];
+	logic [RS-1:0]Shift_Size_Issue[1:0];
+	logic [RS-1:0]Shift_Size_Ex[1:0];
+
+	logic [RS-1:0]rs1_Dec[1:0];
+	logic [RS-1:0]rs2_Dec[1:0];
+	logic [RS-1:0]rd_Dec[1:0];
+
+	logic [RS-1:0]rs1_Issue[1:0];
+	logic [RS-1:0]rs2_Issue[1:0];
+	logic [RS-1:0]rd_Issue[1:0];
+
+	logic [RS-1:0]rs1_Ex[1:0];
+	logic [RS-1:0]rs2_Ex[1:0];
+
+	logic [RS-1:0]rd_Ex[1:0];
+	logic [RS-1:0]rd_Mem[1:0];
+	logic [RS-1:0]rd_WB[1:0];
+
+	Decoder Decoder(
+		.inst(InstructionMemory_out_Dec),
+        
+        .op_code(OP_Code),
+        .sub_op_code(Sub_OP_Code),
+        
+        .rs1(rs1_Dec), 
+        .rs2(rs2_Dec),
+        .rd(rd_Dec),
+        
+        .imm(Imm_Decoded),
+        .shift_size(Shift_Size_Dec)
     );
 
-	
-//////////////////////////////////////////////////
-	
-	
-	logic [4:0]op_code[1:0];
-	logic [3:0]sub_op_code[1:0];
-	
-	logic [WIDTH-1:0]imm_decoded[1:0];
-	
-	//logic [4:0]shift_size;
-	logic [4:0]shift_size_DE[1:0];
-	logic [4:0]shift_size_EX[1:0];
-	
-	logic [4:0]rs1_DE[1:0];
-	logic [4:0]rs1_EX[1:0];
-	
-	logic [4:0]rs2_DE[1:0];
-	logic [4:0]rs2_EX[1:0];
-	
-	//logic [4:0]rd;
-	logic [4:0]rd_DE[1:0];
-	logic [4:0]rd_EX[1:0];
-	logic [4:0]rd_MEM[1:0];
-	logic [4:0]rd_WB[1:0];
 
-	Decoder Decoder_(
-        .inst(InstructionMemory_out_DE),
-        
-        .op_code(op_code),
-        .sub_op_code(sub_op_code),
-        
-        .rs1(rs1_DE), 
-        .rs2(rs2_DE),
-        .rd(rd_DE),
-        
-        .imm(imm_decoded),
-        .shift_size(shift_size_DE)
-    );
+	//Control Signals
+	logic Imm_en;
+
+	logic [1:0]RF_Write_en_Dec;
+	logic [1:0]RF_Write_en_Issue;
+	logic [1:0]RF_Write_en_Ex;
+	logic [1:0]RF_Write_en_Mem;
+	logic [1:0]RF_Write_en_Wb;
+
+	logic [1:0]Mem_Read_en_Dec;
+	logic [1:0]Mem_Read_en_Issue;
+	logic [1:0]Mem_Read_en_Ex;
+	logic [1:0]Mem_Read_en_Mem;
+
+	logic [1:0]Mem_Write_en_Dec;
+	logic [1:0]Mem_Write_en_Issue;
+	logic [1:0]Mem_Write_en_Ex;
+	logic [1:0]Mem_Write_en_Mem;
+
+	logic [1:0]Sign_Extender_en_Dec;
+	logic [1:0]Sign_Extender_en_Issue;
+	logic [1:0]Sign_Extender_en_Ex;
+
+	logic [1:0]Sign_Extender_Type;
+
+	logic [ALU_OP-1:0]ALU_OP_Dec[1:0];
+	logic [ALU_OP-1:0]ALU_OP_Issue[1:0];
+	logic [ALU_OP-1:0]ALU_OP_Ex[1:0];
+
+	logic [1:0]JAL_en_De;
+	logic [1:0]JAL_en_Issue;
+	logic [1:0]JAL_en_Ex;
 	
-	logic imm_en[1:0];
-	
-	//logic rf_write_en;
-	logic rf_write_en_DE[1:0];
-	logic rf_write_en_EX[1:0];
-	logic rf_write_en_MEM[1:0];
-	logic rf_write_en_WB[1:0];
-	
-	//logic mem_read_en;
-	logic mem_read_en_DE[1:0];
-	logic mem_read_en_MEM[1:0];
-	
-	//logic mem_write_en;
-	logic mem_write_en_DE[1:0];
-	logic mem_write_en_EX[1:0];
-	logic mem_write_en_MEM[1:0];
-	
-	logic sign_extender_en_DE[1:0];
-	logic sign_extender_en_EX[1:0];
-	
-	logic sign_extender_type[1:0];
-	
-	//logic [3:0]alu_op;
-	logic [3:0]alu_op_DE[1:0];
-	logic [3:0]alu_op_EX[1:0];
-	
-	//logic JAL_en;
-	logic JAL_en_DE[1:0];
-	logic JAL_en_EX[1:0];
-	
-	//logic JALR_en;
-	logic JALR_en_DE[1:0];
-	logic JALR_en_EX[1:0];
-	
-	
-	//load_type
-	logic [2:0]load_type_DE[1:0];
-	logic [2:0]load_type_EX[1:0];
-	logic [2:0]load_type_MEM[1:0];
-	
-	logic [1:0]store_type[1:0];
-	
-	Control_Unit Control_Unit_(
-        .op_code(op_code),
-        .sub_op_code(sub_op_code),
+	logic [1:0]JALR_en_De;
+	logic [1:0]JALR_en_Issue;
+	logic [1:0]JALR_en_Ex;
+
+	logic [LOAD_TYPE-1:0]Load_Type_Dec[1:0];
+	logic [LOAD_TYPE-1:0]Load_Type_Issue[1:0];
+	logic [LOAD_TYPE-1:0]Load_Type_Ex[1:0];
+	logic [LOAD_TYPE-1:0]Load_Type_Mem[1:0];
+
+	logic[1:0]Store_Type[1:0];
+	logic Branch_en_Dec[1:0];
+	logic Branch_en_Issue[1:0];
+	logic Branch_en_Ex[1:0];
+
+	Control_Unit Control_Unit(
+        .op_code(OP_Code),
+        .sub_op_code(Sub_OP_Code),
 		
-		.load_type(load_type_DE),
-		.store_type(store_type),
+		.load_type(Load_Type_Dec),
+		.store_type(Store_Type),
 		
-		.JAL_en(JAL_en_DE),
-		.JALR_en(JALR_en_DE),
-        .imm_en(imm_en),
-        .rf_write_en(rf_write_en_DE),
-        .mem_read_en(mem_read_en_DE),
-        .mem_write_en(mem_write_en_DE),
-        .branch_mode(program_counter_controller_DE),
-        .sign_extender_en(sign_extender_en_DE),
-        .sign_extender_type(sign_extender_type),
-        .alu_op(alu_op_DE)
+		.JAL_en(JAL_en_Dec),
+		.JALR_en(JALR_en_Dec),
+        .imm_en(Imm_en),
+        .rf_write_en(RF_Write_en_Dec),
+        .mem_read_en(Mem_Read_en_Dec),
+        .mem_write_en(Mem_Write_en_Dec),
+        .branch_mode(Branch_en_Dec),
+        .sign_extender_en(Sign_Extender_en_Dec),
+        .sign_extender_type(Sign_Extender_Type),
+        .alu_op(ALU_OP_Dec)
     );
+
+	logic [1:0]Store_en;
+    assign Store_en[0] = {||Store_Type[0][1:0]};
+    assign Store_en[1] = {||Store_Type[1][1:0]};
+
+    logic [1:0]Load_en;
+    assign Load_en[0] = {||Load_Type_Issue[0][2:0]};
+    assign Load_en[1] = {||Load_Type_Issue[1][2:0]}; 
+
+	logic [WIDTH-1:0]Imm_Sign_Extended_Dec[1:0];
+	logic [WIDTH-1:0]Imm_Sign_Extended_Issue[1:0];
+	logic [WIDTH-1:0]Imm_Sign_Extended_Ex[1:0];
+
+	Sign_Extender Sign_Extender(
+		.in(Imm_Decoded),
+		.sign_extender_en(Sign_Extender_en_Dec),
+		.sign_extender_type(Sign_Extender_Type),
+		.out(Imm_Sign_Extended_Dec)
+	);
+
+	//-----------ISSUE PIPELINE STAGE------------------//
+	//-------------------------------------------------//
 	
+
 	logic [WIDTH-1:0]rd1[1:0];
-	logic [WIDTH-1:0]rd1_DE[1:0];
-	logic [WIDTH-1:0]rd1_EX[1:0];
-	
+	logic [WIDTH-1:0]rd1_Dec[1:0];
+	logic [WIDTH-1:0]rd1_Issue[1:0];
+	logic [WIDTH-1:0]rd1_Ex[1:0];
+
 	logic [WIDTH-1:0]rd2[1:0];
-	logic [WIDTH-1:0]rd2_DE[1:0];
-	logic [WIDTH-1:0]rd2_EX[1:0];
-	logic [WIDTH-1:0]rd2_MEM[1:0];
-	
-	//logic [WIDTH-1:0]wd;
-	logic [WIDTH-1:0]wd_MEM[1:0];
+	logic [WIDTH-1:0]rd2_Dec[1:0];
+	logic [WIDTH-1:0]rd2_Issue[1:0];
+	logic [WIDTH-1:0]rd2_Ex[1:0];
+	logic [WIDTH-1:0]rd2_Mem[1:0];
+
+	Logic [WIDTH-1:0]wd_Mem[1:0];
 	logic [WIDTH-1:0]wd_WB[1:0];
+
 	
-	
-	RF RF_(
-        .rs1(rs1_DE),
-        .rs2(rs2_DE),
+
+	RF RF(
+        .rs1(rs1_Issue),
+        .rs2(rs2_Issue),
         .rd(rd_WB),
         .wd(wd_WB),
 		
         .clk(clk),
         .rst(rst),
 		
-        .write_en(rf_write_en_WB),
+        .write_en(RF_Write_en_Wb),
         .rd1(rd1),
         .rd2(rd2)
     );
 
-	//logic [WIDTH-1:0]imm_sign_extender_out;
-	logic [WIDTH-1:0]imm_sign_extender_out_DE[1:0];
-	logic [WIDTH-1:0]imm_sign_extender_out_EX[1:0];
+	logic [WIDTH-1:0]ALU_in_1_Branch_Issue;
+	logic [WIDTH-1:0]ALU_in_1_Branch_Ex;
 
-	Sign_Extender Sign_Extender_(
-        .in(imm_decoded),
-        .op_code(op_code),
-		
-        .sign_extender_en(sign_extender_en_DE),
-        .sign_extender_type(sign_extender_type),
-		
-        .imm_out(imm_sign_extender_out_DE)
-    );
-	//////////////////////////////////
-	//YENİ PİPE EKLE 
-	//logic [WIDTH-1:0]alu_in1; 
-	logic [WIDTH-1:0]alu_in1_DE[1:0]; 
-	logic [WIDTH-1:0]alu_in1_EX[1:0]; 
+	logic [WIDTH-1:0]ALU_in_2_Branch_Issue;
+	logic [WIDTH-1:0]ALU_in_2_Branch_Ex;
 
-	assign rd1_DE[0] = JAL_en_DE[0] ? PC_out_DE[0] : rd1[0]; // İlk talimat için atama
-	assign rd1_DE[1] = JAL_en_DE[1] ? PC_out_DE[1] : rd1[1]; // İkinci talimat için atama
-	
-	//logic [WIDTH-1:0]alu_in2;
-		
-	// rd2_DE[0] için atama: store_type[0]'a bağlı olarak rd2[0]'ı genişlet veya doğrudan ata
-	assign rd2_DE[0] = (store_type[0] == 2'b00) ? rd2[0] :                    // NA: rd2[0]'ı doğrudan kullan
-					(store_type[0] == 2'b01) ? {{24{1'b0}}, rd2[0][7:0]} : // sb: alt 8 bit, üstüne 24 sıfır
-					(store_type[0] == 2'b10) ? {{16{1'b0}}, rd2[0][15:0]} : // sh: alt 16 bit, üstüne 16 sıfır
-					(store_type[0] == 2'b11) ? rd2[0] :                    // sw: rd2[0]'ı doğrudan kullan
-					32'd0;                                                 // Varsayılan: sıfır
+	logic [WIDTH-1:0]ALU_Branch_Shift_Size_Issue;
+	logic [WIDTH-1:0]ALU_Branch_Shift_Size_Ex;
 
-	// rd2_DE[1] için atama: store_type[1]'e bağlı olarak rd2[1]'i genişlet veya doğrudan ata
-	assign rd2_DE[1] = (store_type[1] == 2'b00) ? rd2[1] :                    // NA: rd2[1]'i doğrudan kullan
-					(store_type[1] == 2'b01) ? {{24{1'b0}}, rd2[1][7:0]} : // sb: alt 8 bit, üstüne 24 sıfır
-					(store_type[1] == 2'b10) ? {{16{1'b0}}, rd2[1][15:0]} : // sh: alt 16 bit, üstüne 16 sıfır
-					(store_type[1] == 2'b11) ? rd2[1] :                    // sw: rd2[1]'i doğrudan kullan
-					32'd0;                                                 // Varsayılan: sıfır
+	logic [ALU_OP-1:0]ALU_Branch_Op_Issue;
+	logic [ALU_OP-1:0]ALU_Branch_Op_Ex;
 
-	/////////////////////////////////////////////////
-	Execute_Register Execute_Register(
-        .clk(clk),
-        .rst(rst),
-		
-        .normal_DE(normal_DE),
-        .PC_out_DE(PC_out_DE),
-        .program_counter_controller_DE(program_counter_controller_DE),
-        .JALR_en_DE(JALR_en_DE),
-        .JAL_en_DE(JAL_en_DE),
-		
-		.shift_size_DE(shift_size_DE),
-		.alu_op_DE(alu_op_DE),
-        
-		.rd_DE(rd_DE),
-        .rf_write_en_DE(rf_write_en_DE),
-        .mem_read_en_DE(mem_read_en_DE),
-        .mem_write_en_DE(mem_write_en_DE),
-        
 
-        .imm_sign_extender_out_DE(imm_sign_extender_out_DE),
-		.rd1_DE(rd1_DE),
-		.rd2_DE(rd2_DE),
-		.rs1_DE(rs1_DE),
-		.rs2_DE(rs2_DE),
-		
-		.sign_extender_en_DE(sign_extender_en_DE),
-		
-		
-		.flush_EX(flush_EX),
-		.load_type_DE(load_type_DE),
-		.load_type_EX(load_type_EX),
+	logic [WIDTH-1:0]ALU_in_1_Memory_Issue;
+	logic [WIDTH-1:0]ALU_in_1_Memory_Ex;
 
-		.BP_decision_DE(BP_decision_DE),
-		.BP_en_DE(BP_en_DE),
-		//-----------------------------------------------
-		
-        .normal_EX(normal_EX),
-        .PC_out_EX(PC_out_EX),
-        .program_counter_controller_EX(program_counter_controller_EX),
-        .JALR_en_EX(JALR_en_EX),
-        .JAL_en_EX(JAL_en_EX),
-		
-		.shift_size_EX(shift_size_EX),
-        .rd_EX(rd_EX),
-        .rf_write_en_EX(rf_write_en_EX),
-        .mem_read_en_EX(mem_read_en_EX),
-        .mem_write_en_EX(mem_write_en_EX),
-        .alu_op_EX(alu_op_EX),
-		
-		.sign_extender_en_EX(sign_extender_en_EX),
-        .imm_sign_extender_out_EX(imm_sign_extender_out_EX),
-		.rd1_EX(rd1_EX),
-		.rd2_EX(rd2_EX),
-		.rs1_EX(rs1_EX),
-		.rs2_EX(rs2_EX),
+	logic [WIDTH-1:0]ALU_in_2_Memory_Issue;
+	logic [WIDTH-1:0]ALU_in_2_Memory_Ex;
 
-		.BP_decision_EX(BP_decision_EX),
-		.BP_en_EX(BP_en_EX)
-    );
-	/////////////////////////////////////////////////
-	
-	//logic [WIDTH-1:0]alu_out;
-	logic [WIDTH-1:0]alu_in2_EX;
-	//logic [WIDTH-1:0]alu_in2_MEM;
-	
-	logic [WIDTH-1:0]alu_out_EX;
-	logic [WIDTH-1:0]alu_out_MEM;
-	
-	logic [31:0]alu_in1;
-	logic [WIDTH-1:0]alu_in2;
-	
-	logic [WIDTH-1:0]rd2_EX2;
+	logic [WIDTH-1:0]ALU_Memory_Shift_Size_Issue;
+	logic [WIDTH-1:0]ALU_Memory_Shift_Size_Ex;
 
-	assign 	alu_in1 = 	(forward_mode_rs1 == 2'b00) ? (rd1_EX) 	: 
-						(forward_mode_rs1 == 2'b01) ? (alu_out_MEM) 	:
-						(forward_mode_rs1 == 2'b11) ? (wd_WB) : rd1_EX	;
-	
-	assign 	rd2_EX2 = 	(forward_mode_rs2 == 2'b00) ? (rd2_EX) 	: 
-						(forward_mode_rs2 == 2'b01) ? (alu_out_MEM) 	:
-						(forward_mode_rs2 == 2'b11) ? (wd_WB) : rd2_EX	;
-	
-	assign alu_in2_EX =	(program_counter_controller_EX == 2'b11) ? (rd2_EX2): 
-						(sign_extender_en_EX) ? (imm_sign_extender_out_EX) 	: (rd2_EX2);
-				 
-	ALU ALU_(
-        .rs1(alu_in1),
-        .rs2(alu_in2_EX),
-		.shifter_size(shift_size_EX),
-        .op(alu_op_EX),
-		
-        .result(alu_out_EX),
-        .branch_control(alu_branch_control_EX)
+	logic [ALU_OP-1:0]ALU_Memory_Op_Issue;
+	logic [ALU_OP-1:0]ALU_Memory_Op_Ex;
+
+	 Issue_Unit Issue_Unit(
+        .rs1(rs1_Issue),
+        .rs2(rs2_Issue),
+        .RF_Write_en_Issue(RF_Write_en_Issue),
+        .Mem_Read_en_Issue(Mem_Read_en_Issue),
+        .Mem_Write_en_Issue(Mem_Write_en_Issue),
+        .Sign_Extender_en_Issue(Sign_Extender_en_Issue),
+        .ALU_OP_Issue(ALU_OP_Issue),
+        .JAL_en_Issue(JAL_en_Issue),
+        .JALR_en_Issue(JALR_en_Issue),
+        .Load_Type_Issue(Load_Type_Issue),
+        .Store_Type_Issue(Store_Type_Issue),
+        .Shift_Size(Shift_Size_Issue),
+        .Imm(Imm_Sign_Extended_Issue),
+        .rd(rd_Issue),
+        .PC(PC_out_Issue),
+
+        // .Forwarding_Mode_rs1_Branch_Pipeline(Forwarding_Mode_rs1_Branch_Pipeline),
+        // .Forwarding_Mode_rs2_Branch_Pipeline(Forwarding_Mode_rs2_Branch_Pipeline),
+        // .Forwarding_Mode_rs1_Memory_Pipeline(Forwarding_Mode_rs1_Memory_Pipeline),
+        // .Forwarding_Mode_rs2_Memory_Pipeline(Forwarding_Mode_rs2_Memory_Pipeline),
+
+        .Branch_en(Branch_en_Issue),
+
+        // .Forwarding_From_Branch_Ex(Forwarding_From_Branch_Ex),
+        // .Forwarding_From_Memory_Ex(Forwarding_From_Memory_Ex),
+        // .Forwarding_From_Branch_Mem(Forwarding_From_Branch_Mem),
+        // .Forwarding_From_Memory_Mem(Forwarding_From_Memory_Mem),
+        // .Forwarding_From_Branch_WB(Forwarding_From_Branch_WB),
+        // .Forwarding_From_Memory_WB(Forwarding_From_Memory_WB),
+
+        .Branch_Pipeline_rs1_out(Branch_Pipeline_rs1),
+        .Branch_Pipeline_rs2_out(Branch_Pipeline_rs2),
+        .Branch_Pipeline_rd_out(Branch_Pipeline_rd),
+        .Branch_Pipeline_PC_out(Branch_Pipeline_PC),
+        .Branch_Pipeline_imm_out(Branch_Pipeline_imm),
+        .Branch_Pipeline_shift_size_out(Branch_Pipeline_shift_size),
+        .Branch_Pipeline_ALU_OP_out(Branch_Pipeline_ALU_OP),
+
+        .Memory_Pipeline_rs1_out(Memory_Pipeline_rs1),
+        .Memory_Pipeline_rs2_out(Memory_Pipeline_rs2),
+        .Memory_Pipeline_rd_out(Memory_Pipeline_rd),
+        .Memory_Pipeline_PC_out(Memory_Pipeline_PC),
+        .Memory_Pipeline_imm_out(Memory_Pipeline_imm),
+        .Memory_Pipeline_shift_size_out(Memory_Pipeline_shift_size),
+        .Memory_Pipeline_ALU_OP_out(Memory_Pipeline_ALU_OP),
+        .Memory_Pipeline_Mem_Read_en_out(Memory_Pipeline_Mem_Read_en),
+        .Memory_Pipeline_Mem_Write_en_out(Memory_Pipeline_Mem_Write_en)
     );
 	
-	logic branch_en_EX;
-	assign branch_en_EX = (alu_op_EX == 4'b1010) || (alu_op_EX == 4'b1001)	|| 	(alu_op_EX == 4'b1011) || (alu_op_EX == 4'b1100);
 
-	assign jump_EX = (JAL_en_EX) ? (alu_out_EX) : (JALR_en_EX ? {alu_out_EX[31:1] , 1'b0} : 32'd0);
-	
-	/*
-	Kogge_Stone Branch_Calculation(
-		.in0(normal_EX),
-		.in1(imm_sign_extender_out_EX),
-		
-		.sub_en(1'b0),
-		.out(branch_EX)
+	Forwarding_MUX Forwarding_MUX_Branch_rd1(
+		.Control_Signal(Forwarding_Mode_rs1_Branch_Pipeline),
+		.Normal_Data(Branch_Pipeline_rs1),
+
+		.Forwarding_From_Branch_Ex(ALU_in_1_Branch_Ex),
+		.Forwarding_From_Memory_Ex(ALU_in_1_Memory_Ex),
+
+		.Forwarding_From_Branch_Mem(ALU_in_1_Branch_Mem),
+		.Forwarding_From_Memory_Mem(ALU_in_1_Memory_Mem),
+
+		.Forwarding_From_Branch_WB(ALU_in_1_Branch_Wb),
+		.Forwarding_From_Memory_WB(ALU_in_1_Memory_Wb)
 	);
-	*/
 
-	//////////////////////////////////////
-	Memory_Register Memory_Register_(
-        .clk(clk),
-        .rst(rst),
-        .jump_EX(jump_EX),
-        .branch_EX(branch_EX),
-        .normal_EX(normal_EX),
-        .PC_out_EX(PC_out_EX),
-        .program_counter_controller_EX(program_counter_controller_EX),
-        .alu_branch_control_EX(alu_op_EX),
-        .rd_EX(rd_EX),
-        .rf_write_en_EX(rf_write_en_EX),
-        .mem_read_en_EX(mem_read_en_EX),
-        .mem_write_en_EX(mem_write_en_EX),
-        .rd2_EX(rd2_EX2),
-		.alu_out_EX(alu_out_EX),
+	Forwarding_MUX Forwarding_MUX_Branch_rd2(
+		.Control_Signal(Forwarding_Mode_rs2_Branch_Pipeline),
+		.Normal_Data(Branch_Pipeline_rs2),
+
+		.Forwarding_From_Branch_Ex(ALU_in_2_Branch_Ex),
+		.Forwarding_From_Memory_Ex(ALU_in_2_Memory_Ex),
+
+		.Forwarding_From_Branch_Mem(ALU_in_2_Branch_Mem),
+		.Forwarding_From_Memory_Mem(ALU_in_2_Memory_Mem),
+
+		.Forwarding_From_Branch_WB(ALU_in_2_Branch_Wb),
+		.Forwarding_From_Memory_WB(ALU_in_2_Memory_Wb)
+	);
+
+	Forwarding_MUX Forwarding_MUX_Memory_rd1(
+		.Control_Signal(Forwarding_Mode_rs1_Memory_Pipeline),
+		.Normal_Data(Memory_Pipeline_rs1),
+
+		.Forwarding_From_Branch_Ex(ALU_in_1_Branch_Ex),
+		.Forwarding_From_Memory_Ex(ALU_in_1_Memory_Ex),
+
+		.Forwarding_From_Branch_Mem(ALU_in_1_Branch_Mem),
+		.Forwarding_From_Memory_Mem(ALU_in_1_Memory_Mem),
+
+		.Forwarding_From_Branch_WB(ALU_in_1_Branch_Wb),
+		.Forwarding_From_Memory_WB(ALU_in_1_Memory_Wb)
+	);
+
+	Forwarding_MUX Forwarding_MUX_Memory_rd2(
+		.Control_Signal(Forwarding_Mode_rs2_Memory_Pipeline),
+		.Normal_Data(Memory_Pipeline_rs2),
+
+		.Forwarding_From_Branch_Ex(ALU_in_2_Branch_Ex),
+		.Forwarding_From_Memory_Ex(ALU_in_2_Memory_Ex),
+
+		.Forwarding_From_Branch_Mem(ALU_in_2_Branch_Mem),
+		.Forwarding_From_Memory_Mem(ALU_in_2_Memory_Mem),
+
+		.Forwarding_From_Branch_WB(ALU_in_2_Branch_Wb),
+		.Forwarding_From_Memory_WB(ALU_in_2_Branch_Wb)
+	);
+
+	//-----------EXECUTE PIPELINE STAGE------------------//
+	//---------------------------------------------------//
+
+	logic [WIDTH-1:0]ALU_Branch_Result_Ex;
+	logic [WIDTH-1:0]ALU_Branch_Result_Mem;
+	logic [WIDTH-1:0]ALU_Branch_Result_Wb;
+
+	logic [WIDTH-1:0]ALU_Memory_Result_Ex;
+	logic [WIDTH-1:0]ALU_Memory_Result_Mem;
+	logic [WIDTH-1:0]ALU_Memory_Result_Wb;
+
+	ALU ALU_Branch(
+        .rs1(ALU_in_1_Branch_Ex),
+        .rs2(ALU_in_2_Branch_Ex),
+		.shifter_size(ALU_Branch_Shift_Size_Ex),
+        .op(ALU_Branch_Op_Ex),
 		
-		.load_type_EX(load_type_EX),
-		.load_type_MEM(load_type_MEM),
-		
-		.alu_out_MEM(alu_out_MEM),
-        .jump_MEM(jump_MEM),
-        .branch_MEM(branch_MEM),
-        .normal_MEM(normal_MEM),
-        .PC_out_MEM(PC_out_MEM),
-        .program_counter_controller_MEM(program_counter_controller_MEM),
-        .alu_branch_control_MEM(alu_branch_control_MEM),
-        .rd_MEM(rd_MEM),
-        .rf_write_en_MEM(rf_write_en_MEM),
-        .mem_read_en_MEM(mem_read_en_MEM),
-        .mem_write_en_MEM(mem_write_en_MEM),
-        .rd2_MEM(rd2_MEM)
+        .result(ALU_Branch_Result_Ex),
+        .branch_control(Branch_Predictor_Feedback)
     );
-	//////////////////////////////////////
-	
-	//logic [WIDTH-1:0]memory_out;
-	logic [WIDTH-1:0]memory_out_MEM;
-	logic [WIDTH-1:0]memory_out;
-	
+
+	ALU ALU_Memory(
+        .rs1(ALU_in_1_Memory_Ex),
+        .rs2(ALU_in_2_Memory_Ex),
+		.shifter_size(ALU_Memory_Shift_Size_Ex),
+        .op(ALU_Memory_Op_Ex),
+		
+        .result(ALU_Memory_Result_Ex),
+    );
+
+	//-----------MEMORY PIPELINE STAGE------------------//
+	//--------------------------------------------------//
+
+	logic [WIDTH-1:0]Memory_Out_Mem;
+	logic [WIDTH-1:0]Memory_Out;
+
 	Memory Memory_(
-    .mem_read_en(mem_read_en_MEM),
-    .mem_write_en(mem_write_en_MEM),
-    .clk(clk),
-    .rst(rst),
-    .address(alu_out_MEM),
-    .write_data(rd2_MEM),
-    .read_data(memory_out)
-	);
-	
-	assign memory_out_MEM = 
-    (load_type_MEM == 3'b001) ? {{24{memory_out[7]}}  , memory_out[7:0]}  :
-    (load_type_MEM == 3'b010) ? {24'd0              , memory_out[7:0]}  :
-    (load_type_MEM == 3'b011) ? {{16{memory_out[15]}} , memory_out[15:0]} :
-    (load_type_MEM == 3'b100) ? {16'd0              , memory_out[15:0]} :
-    (load_type_MEM == 3'b101) ? {memory_out[31:0]}  :
-    32'd0;
+		.clk(clk),
+		.rst(rst),
 
-	
-							
-	
-	assign wd_MEM = (mem_read_en_MEM) ? (memory_out_MEM) : ((program_counter_controller_MEM == 2'b10) ? normal_MEM : alu_out_MEM);
-	
-	WriteBack_Register WriteBack_Register_ (
-        .clk(clk),
-        .rst(rst),
-        .alu_branch_control_MEM(alu_branch_control_MEM),
-        .mem_write_en_MEM(mem_write_en_MEM),
-        .mem_read_en_MEM(mem_read_en_MEM),
-        .rd2_MEM(rd2_MEM),
-        .program_counter_controller_MEM(program_counter_controller_MEM),
-        .rd_MEM(rd_MEM),
-        .rf_write_en_MEM(rf_write_en_MEM),
-        .wd_MEM(wd_MEM),
-        .PC_out_MEM(PC_out_MEM),
-        .normal_MEM(normal_MEM),
-        .program_counter_controller_WB(program_counter_controller_WB),
-        .rd_WB(rd_WB),
-        .rf_write_en_WB(rf_write_en_WB),
-        .wd_WB(wd_WB),
-        .PC_out_WB(PC_out_WB),
-        .normal_WB(normal_WB)
-    );
-	
-	Hazard_Unit Hazard_Unit_(
-        .rs1_DE          (rs1_DE),
-        .rs1_EX          (rs1_EX),
-        .rs2_DE          (rs2_DE),
-        .rs2_EX          (rs2_EX),
-        .rd_EX           (rd_EX),
-        .rd_MEM          (rd_MEM),
-        .rd_WB           (rd_WB),
-        .mem_read_en_EX  (mem_read_en_EX),
-        .rf_write_en_MEM (rf_write_en_MEM),
-        .rf_write_en_WB  (rf_write_en_WB),
+		.mem_read_en(Mem_Read_en_Mem),
+		.mem_write_en(Mem_Write_en_Mem),
 		
-		.branch_control(alu_branch_control_EX),
-		.branch_decision(BP_decision_EX),
-		.branch_correction(branch_correction),
+		.address(ALU_Memory_Result_Mem),
+		.write_data(rd2_Mem),
+		.read_data(Memory_Out)
+	);	
 
-		.program_counter_controller_EX(program_counter_controller_EX),
 
-        .forward_mode_rs1    (forward_mode_rs1),
-		.forward_mode_rs2	 (forward_mode_rs2),
-        .stall_DE        (stall_DE),
-        .stall_F         (stall_F),
-        .flush_EX        (flush_EX),
-		.flush_DE        (flush_DE)
+	//-----------WRITEBACK PIPELINE STAGE------------------//
+	//-----------------------------------------------------//
+
+	 
+
+	Hazard_Unit hazard_unit_inst (
+        .rs1_Dec_Branch_Pipeline(rs1_Dec[0]),
+        .rs1_Dec_Memory_Pipeline(rs1_Dec[1]),
+        .rs1_Issue_Branch_Pipeline(),
+        .rs1_Issue_Memory_Pipeline(),
+        .rs1_Ex_Branch_Pipeline(rs1_Ex[0]),
+        .rs1_Ex_Memory_Pipeline(rs1_Ex[1]),
+
+        .rs2_Dec_Branch_Pipeline(rs2_Dec[0]),
+        .rs2_Dec_Memory_Pipeline(rs2_Dec[1]),
+        .rs2_Issue_Branch_Pipeline(),
+        .rs2_Issue_Memory_Pipeline(),
+        .rs2_Ex_Branch_Pipeline(rs2_Ex[0]),
+        .rs2_Ex_Memory_Pipeline(rs2_Ex[1]),
+
+        .rd_Issue_Branch_Pipeline(),
+        .rd_Issue_Memory_Pipeline(),
+        .rd_Ex_Branch_Pipeline(rd_Ex[0]),
+        .rd_Ex_Memory_Pipeline(rd_Ex[1]),
+        .rd_Mem_Branch_Pipeline(rd_mem[0]),
+        .rd_Mem_Memory_Pipeline(rd_Mem[1]),
+        .rd_Wb_Branch_Pipeline(rd_WB[0]),
+        .rd_Wb_Memory_Pipeline(rd_WB[1]),
+
+        .program_counter_controller_EX(PC_MUX_Controller),
+        .Mem_read_en_Ex(Mem_Read_en_Ex),
+        .Branch_en(Branch_en_Issue),
+        .Load_Type_Issue(Load_Type_Issue),
+        .Store_Type_Issue(Store_Type_Issue),
+        .RF_Write_en_Ex(RF_Write_en_Ex),
+        .RF_Write_en_Mem(RF_Write_en_Mem),
+        .RF_Write_en_WB(RF_Write_en_Wb),
+        .branch_control(),
+        .branch_decision(),
+        .Forwarding_Mode_rs1_Branch_Pipeline(Forwarding_Mode_rs1_Branch_Pipeline),
+        .Forwarding_Mode_rs2_Branch_Pipeline(Forwarding_Mode_rs2_Branch_Pipeline),
+        .Forwarding_Mode_rs1_Memory_Pipeline(Forwarding_Mode_rs1_Memory_Pipeline),
+        .Forwarding_Mode_rs2_Memory_Pipeline(Forwarding_Mode_rs2_Memory_Pipeline),
+        .Branch_Correction(Branch_Correction),
+        .Stall_Fetch(Stall_Fetch),
+        .Stall_Dec(Stall_Dec),
+        .Stall_Issue_Branch_Pipeline(Stall_Issue_Branch_Pipeline),
+        .Stall_Issue_Memory_Pipeline(Stall_Issue_Memory_Pipeline),
+        .Flush_Ex(Flush_Ex),
+        .Flush_Dec(Flush_Dec)
     );
-	
-	
 
 endmodule
 
-module MUX_PC #(
-	parameter WIDTH = 32
-	)(
-	input logic [WIDTH-1:0]jump, 
-	input logic [WIDTH-1:0]branch, 
-	input logic [WIDTH-1:0]normal_F,
-	input logic [WIDTH-1:0]normal_EX,
-	
-	input logic branch_correction,
 
-	//input logic branch_en,
-	input logic branch_en_F,
-	input logic branch_en_EX,
 
-	input logic [1:0]program_counter_controller,
-	
-	output logic [WIDTH-1:0]out	
-);	
-	always_comb
-	begin
-		if(branch_en_EX)
-		begin
-			if(branch_correction)
-			begin
-				out = normal_EX;
-			end
-			else
-			begin
-				out = branch;
-			end
-			
-		end
-
-		else if(branch_en_F)
-		begin
-				out = branch;
-		end
-
-		else
-		begin
-			case({program_counter_controller , branch_en_F})
-				3'b010: 	begin  out = normal_F; 	end //normal
-				3'b100: 	begin  out = jump; 		end //jump
-				default: 	begin  out = normal_F ; 	end //begin  out = 32'd4; 	end
-			endcase
-		end
-	end
-endmodule

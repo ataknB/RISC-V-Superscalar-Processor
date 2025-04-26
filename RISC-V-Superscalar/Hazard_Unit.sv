@@ -1,96 +1,274 @@
 module Hazard_Unit(
-	input logic [4:0]rs1_DE,
-	input logic [4:0]rs1_EX,
+	input logic 	[4:0]rs1_Dec_Branch_Pipeline,
+	input logic 	[4:0]rs1_Dec_Memory_Pipeline,
+
+	input logic 	[4:0]rs1_Issue_Branch_Pipeline,
+	input logic 	[4:0]rs1_Issue_Memory_Pipeline,
+
+	input logic 	[4:0]rs1_Ex_Branch_Pipeline,
+	input logic 	[4:0]rs1_Ex_Memory_Pipeline,
 	
-	input logic [4:0]rs2_DE,
-	input logic [4:0]rs2_EX,
+	input logic 	[4:0]rs2_Dec_Branch_Pipeline,
+	input logic 	[4:0]rs2_Dec_Memory_Pipeline,
+
+	input logic 	[4:0]rs2_Issue_Branch_Pipeline,
+	input logic 	[4:0]rs2_Issue_Memory_Pipeline,
+
+	input logic 	[4:0]rs2_Ex_Branch_Pipeline,
+	input logic 	[4:0]rs2_Ex_Memory_Pipeline,
 	
-	input logic [4:0]rd_EX,
-	input logic [4:0]rd_MEM,
-	input logic [4:0]rd_WB,
+	input logic 	[4:0]rd_Issue_Branch_Pipeline,
+	input logic 	[4:0]rd_Issue_Memory_Pipeline,
+
+	input logic 	[4:0]rd_Ex_Branch_Pipeline,
+	input logic 	[4:0]rd_Ex_Memory_Pipeline,
+
+	input logic 	[4:0]rd_Mem_Branch_Pipeline,
+	input logic 	[4:0]rd_Mem_Memory_Pipeline,
+
+	input logic 	[4:0]rd_Wb_Branch_Pipeline,
+	input logic 	[4:0]rd_Wb_Memory_Pipeline,
+//--------------------------------------------------------
+	input logic 	[1:0]program_counter_controller_EX,
+	input logic 	[1:0]Mem_read_en_Ex,
 	
-	input logic [1:0]program_counter_controller_EX,
-	input logic mem_read_en_EX,
+    input logic     [1:0]Branch_en,
+	input logic     [2:0]Load_Type_Issue[1:0],
+    input logic     [1:0]Store_Type_Issue[1:0],
+
+	input logic 	[1:0]RF_Write_en_Ex,
+	input logic 	[1:0]RF_Write_en_Mem,
+	input logic 	[1:0]RF_Write_en_WB,
 	
-	input logic rf_write_en_MEM,
-	input logic rf_write_en_WB,
+	input logic 	[1:0]branch_control,
+	input logic 	[1:0]branch_decision,
 	
-	input logic branch_control,
-	input logic branch_decision,
-	
-	output logic [1:0]forward_mode_rs1,
-	output logic [1:0]forward_mode_rs2,
+	output logic 	[2:0]Forwarding_Mode_rs1_Branch_Pipeline,
+	output logic 	[2:0]Forwarding_Mode_rs2_Branch_Pipeline,
+
+	output logic 	[2:0]Forwarding_Mode_rs1_Memory_Pipeline,
+	output logic 	[2:0]Forwarding_Mode_rs2_Memory_Pipeline,
+
 	/*
-		00 : normal input
-		01 : from memory forward
-		11 : from writeback forward
+		000 : normal input
+		001 : from Branch Execute Stage
+		010 : from Memory Execute Stage
+		
+		011 : from Branch Memory Stage
+		100 : from Memory Memory Stage
+		
+		101 : from Branch WB Stage
+		110 : from Memory WB Stage
 	*/
 
-	output logic branch_correction,
+	output logic Branch_Correction,
 
-	output logic stall_DE,
-	output logic stall_F,
-	output logic flush_EX,
-	output logic flush_DE
+	output logic Stall_Fetch,
+	output logic Stall_Dec,
+	output logic Stall_Issue_Branch_Pipeline
+	output logic Stall_Issue_Memory_Pipeline
+	
+	output logic Flush_Ex,
+	output logic Flush_Dec
 );
 	
-	assign bracnch_predictor_flush = (branch_decision ^ branch_control);
+	logic   [1:0]Store_en;
+    assign  Store_en[0] = {||Store_Type_Issue[0][1:0]};
+    assign  Store_en[1] = {||Store_Type_Issue[1][1:0]};
+
+    logic   [1:0]Load_en;
+    assign  Load_en[0] = {||Load_Type_Issue[0][2:0]};
+    assign  Load_en[1] = {||Load_Type_Issue[1][2:0]};
+
+    logic   [1:0]temp_mem;
+    assign  temp_mem[0] = Store_en[0] || Load_en[0]; 
+    assign  temp_mem[1] = Store_en[1] || Load_en[1]; 
 
 	always_comb
 	begin
-		// Forwarding for rs1
-		if ((rs1_EX == rd_MEM) && rf_write_en_MEM && rs1_EX != 5'd0) 
-			forward_mode_rs1 = 2'b01; // Memory forwarding
-		else if ((rs1_EX == rd_WB) && rf_write_en_WB && rs1_EX != 5'd0) 
-			forward_mode_rs1 = 2'b11; // Writeback forwarding
+		//Aynı anda iki tane load, store  veya branch varsa stall yap
+		if((||Store_en[1:0] && ||Load_en[1:0]) || (&&Store_en[1:0]) || (&&Load_en[1:0]) || &&Branch_en[1:0])
+		begin
+			Stall_Issue_Branch_Pipeline = 1'd1; // Stall Issue Stage
+			Stall_Issue_Memory_Pipeline = 1'd0;
+			Stall_Fetch = 1'd1; // Stall Fetch Stage
+			Stall_Dec = 1'd1; // Stall Decode Stage
+		end
+
+		else if(rs1_Issue[0] == rd_Issue[1] || rs1_Issue[1] == rd_Issue[0] || rs2_Issue[0] == rd_Issue[1] || rs2_Issue[1] == rd_Issue[0])
+		begin
+			Stall_Issue_Memory_Pipeline = 1'd1; // Stall Issue Stage
+			Stall_Issue_Branch_Pipeline = 1'd0;
+			Stall_Fetch = 1'd1; // Stall Fetch Stage
+			Stall_Dec = 1'd1; // Stall Decode Stage
+		end
+
 		else 
-			forward_mode_rs1 = 2'b00; // Normal case
-		
-		// Forwarding for rs2
-		if ((rs2_EX == rd_MEM) && rf_write_en_MEM && rs2_EX != 5'd0) 
-			forward_mode_rs2 = 2'b01; // Memory forwarding
-		else if ((rs2_EX == rd_WB) && rf_write_en_WB && rs2_EX != 5'd0) 
-			forward_mode_rs2 = 2'b11; // Writeback forwarding
-		else 
-			forward_mode_rs2 = 2'b00; // Normal case
-		
-		// Stall and Flush Logic for Load-use Hazard
-		if ((mem_read_en_EX) && 
-			((rs1_DE == rd_EX && rs1_DE != 5'd0) || (rs2_DE == rd_EX && rs2_DE != 5'd0)))
+		begin
+			//BRANCH PIPELINE FORWARDING
+			if((rs1_Issue_Branch_Pipeline == rd_Mem_Branch_Pipeline) && RF_Write_en_Mem && rs1_Ex_Branch_Pipeline != 5'd0)
 			begin
-				stall_F = 1'd1; 
-				stall_DE = 1'd1; 
-				flush_EX = 1'd1;
-			end    
-		else
-			begin
-				stall_F = 1'd0; 
-				stall_DE = 1'd0; 
-				flush_EX = 1'd0;
-			end 
-		
-		//Jump flushing
-		//Branch Instruciton
-		if(bracnch_predictor_flush)
-			begin
-				flush_EX = 1'b1;
-				flush_DE = 1'b1;
-				branch_correction = 1'b1;
+				Forwarding_Mode_rs1_Branch_Pipeline = 3'b011; // Branch Memory forwarding
 			end
-		
-		else if(program_counter_controller_EX == 2'd2)
+			else if((rs1_Issue_Branch_Pipeline == rd_Wb_Branch_Pipeline) && RF_Write_en_WB && rs1_Ex_Branch_Pipeline != 5'd0)
 			begin
-				flush_DE = 1'd1; 
-				flush_EX = 1'd1;
-				branch_correction = 1'b0;
+				Forwarding_Mode_rs1_Branch_Pipeline = 3'b101; // Branch Writeback forwarding
+			end
+			else if((rs1_Issue_Branch_Pipeline == rd_Ex_Branch_Pipeline) && RF_Write_en_Ex && rs1_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs1_Branch_Pipeline = 3'b001; // Branch Execute Stage forwarding
+			end	
+			else if(rs1_Issue_Branch_Pipeline == rd_Mem_Memory_Pipeline && RF_Write_en_Mem && rs1_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs1_Branch_Pipeline = 3'b100; //Memory Memory Forwarding
 			end
 
-		else
+			else if(rs1_Issue_Branch_Pipeline == rd_WB_Memory_Pipeline && RF_Write_en_Mem && rs1_Ex_Branch_Pipeline != 5'd0)
 			begin
-				flush_EX = 1'b0;
-				flush_DE = 1'b0;
-				branch_correction = 1'b0;
+				Forwarding_Mode_rs1_Branch_Pipeline = 3'b110; //Memory Writeback Forwarding
 			end
+
+			else if(rs1_Issue_Branch_Pipeline == rd_Ex_Memory_Pipeline && RF_Write_en_Mem && rs1_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs1_Branch_Pipeline = 3'b010; //Memory Execute Stage Forwarding
+			end
+
+			else 
+			begin
+				Forwarding_Mode_rs1_Branch_Pipeline = 3'b000; // Normal case
+			end
+
+			//---------------------------------------------------------
+
+			if((rs2_Issue_Branch_Pipeline == rd_Mem_Branch_Pipeline) && RF_Write_en_Mem && rs2_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs2_Branch_Pipeline = 3'b011; // Branch Memory forwarding
+			end
+			else if((rs2_Issue_Branch_Pipeline == rd_Wb_Branch_Pipeline) && RF_Write_en_WB && rs2_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs2_Branch_Pipeline = 3'b101; // Branch Writeback forwarding
+			end
+			else if((rs2_Issue_Branch_Pipeline == rd_Ex_Branch_Pipeline) && RF_Write_en_Ex && rs2_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs2_Branch_Pipeline = 3'b001; // Branch Execute Stage forwarding
+			end	
+			else if(rs2_Issue_Branch_Pipeline == rd_Mem_Memory_Pipeline && RF_Write_en_Mem && rs2_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs2_Branch_Pipeline = 3'b100; //Memory Memory Forwarding
+			end
+
+			else if(rs2_Issue_Branch_Pipeline == rd_WB_Memory_Pipeline && RF_Write_en_Mem && rs2_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs2_Branch_Pipeline = 3'b110; //Memory Writeback Forwarding
+			end
+
+			else if(rs2_Issue_Branch_Pipeline == rd_Ex_Memory_Pipeline && RF_Write_en_Mem && rs2_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs2_Branch_Pipeline = 3'b010; //Memory Execute Stage Forwarding
+			end
+
+			else 
+			begin
+				Forwarding_Mode_rs2_Branch_Pipeline = 3'b000; // Normal case
+			end
+
+			//MEMORY PIPELINE FORWARDING
+			//---------------------------------------------------------
+			if((rs1_Issue_Memory_Pipeline == rd_Mem_Branch_Pipeline) && RF_Write_en_Mem && rs1_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs1_Memory_Pipeline = 3'b011; // Branch Memory forwarding
+			end
+			else if((rs1_Issue_Memory_Pipeline == rd_Wb_Branch_Pipeline) && RF_Write_en_WB && rs1_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs1_Memory_Pipeline = 3'b101; // Branch Writeback forwarding
+			end
+			else if((rs1_Issue_Memory_Pipeline == rd_Ex_Branch_Pipeline) && RF_Write_en_Ex && rs1_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs1_Memory_Pipeline = 3'b001; // Branch Execute Stage forwarding
+			end	
+			else if(rs1_Issue_Memory_Pipeline == rd_Mem_Memory_Pipeline && RF_Write_en_Mem && rs1_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs1_Memory_Pipeline = 3'b100; //Memory Memory Forwarding
+			end
+
+			else if(rs1_Issue_Memory_Pipeline == rd_WB_Memory_Pipeline && RF_Write_en_Mem && rs1_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs1_Memory_Pipeline = 3'b110; //Memory Writeback Forwarding
+			end
+
+			else if(rs1_Issue_Memory_Pipeline == rd_Ex_Memory_Pipeline && RF_Write_en_Mem && rs1_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs1_Memory_Pipeline = 3'b010; //Memory Execute Stage Forwarding
+			end
+
+			else 
+			begin
+				Forwarding_Mode_rs1_Memory_Pipeline = 3'b000; // Normal case
+			end
+
+			//---------------------------------------------------------
+
+			if((rs2_Issue_Memory_Pipeline == rd_Mem_Branch_Pipeline) && RF_Write_en_Mem && rs2_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs2_Memory_Pipeline = 3'b011; // Branch Memory forwarding
+			end
+			else if((rs2_Issue_Memory_Pipeline == rd_Wb_Branch_Pipeline) && RF_Write_en_WB && rs2_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs2_Memory_Pipeline = 3'b101; // Branch Writeback forwarding
+			end
+			else if((rs2_Issue_Memory_Pipeline == rd_Ex_Branch_Pipeline) && RF_Write_en_Ex && rs2_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs2_Memory_Pipeline = 3'b001; // Branch Execute Stage forwarding
+			end	
+			else if(rs2_Issue_Memory_Pipeline == rd_Mem_Memory_Pipeline && RF_Write_en_Mem && rs2_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs2_Memory_Pipeline = 3'b100; //Memory Memory Forwarding
+			end
+
+			else if(rs2_Issue_Memory_Pipeline == rd_WB_Memory_Pipeline && RF_Write_en_Mem && rs2_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs2_Memory_Pipeline = 3'b110; //Memory Writeback Forwarding
+			end
+
+			else if(rs2_Issue_Memory_Pipeline == rd_Ex_Memory_Pipeline && RF_Write_en_Mem && rs2_Ex_Branch_Pipeline != 5'd0)
+			begin
+				Forwarding_Mode_rs2_Memory_Pipeline = 3'b010; //Memory Execute Stage Forwarding
+			end
+
+			else 
+			begin
+				Forwarding_Mode_rs2_Memory_Pipeline = 3'b000; // Normal case
+			end
+		end
+
+		//Flush
+		if(	(Load_en[0] || Load_en[1]) &&
+		 	rs1_Issue_Branch_Pipeline == rd_Ex_Branch_Pipeline && rs1_Issue_Branch_Pipeline != 5'd0 ||
+			rs2_Issue_Branch_Pipeline == rd_Ex_Branch_Pipeline && rs2_Issue_Branch_Pipeline != 5'd0 ||
+			rs1_Issue_Memory_Pipeline == rd_Ex_Branch_Pipeline && rs1_Issue_Memory_Pipeline != 5'd0 ||
+			rs2_Issue_Memory_Pipeline == rd_Ex_Branch_Pipeline && rs2_Issue_Memory_Pipeline != 5'd0)			
+		begin
+			Stall_Fetch = 1'd1; // Stall Fetch Stage
+			Stall_Dec = 1'd1; // Stall Decode Stage
+			Stall_Issue_Branch_Pipeline = 1'd1; // Stall Issue Stage
+			Stall_Issue_Memory_Pipeline = 1'd1; // Stall Issue Stage
+			Flush_Ex = 1'd1;
+
+		end
+
+		else 
+		begin
+			Stall_Fetch = 1'd0; // Stall Fetch Stage
+			Stall_Dec = 1'd0; // Stall Decode Stage
+			Stall_Issue_Branch_Pipeline = 1'd0; // Stall Issue Stage
+			Stall_Issue_Memory_Pipeline = 1'd0; // Stall Issue Stage
+			Flush_Ex = 1'd0;
+		end	
+		
+
+		if()
 	end
+
 	
+
 endmodule
