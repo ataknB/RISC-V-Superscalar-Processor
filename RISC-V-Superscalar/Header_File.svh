@@ -1,8 +1,12 @@
-parameter int WIDTH = 32;
+	parameter int WIDTH = 32;
+	parameter int RS = 5;
+	parameter int IMM = 32;
+	parameter int SUB_OPCODE = 4;
+	parameter int LOAD_TYPE  = 3;
+	parameter int ALU_OP = 4;
+	parameter int FORWARD_MODE = 2;
 
-typedef struct packed{
-    logic    
-} Forwarding_Signals;
+
 
 function automatic logic [WIDTH-1:0] Forwarind_MUX (
     input logic [2:0]Control_Signal,

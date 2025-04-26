@@ -1,15 +1,16 @@
+`include "Header_File.svh"
 module Core_Top #(
 	parameter WIDTH = 32,
 	parameter RS = 5,
 	parameter IMM = 32,
 	parameter SUB_OPCODE = 4,
 	parameter LOAD_TYPE  = 3,
-	parameter ALU_OP = 4
+	parameter ALU_OP = 4,
 	parameter FORWARD_MODE = 2
 
 	)(
 	input logic clk,
-	input logic rst,
+	input logic rst
 	);
 
 	logic [WIDTH-1:0] Jump_Addr_Ex;
@@ -75,7 +76,7 @@ module Core_Top #(
 	logic Loop_Detector_en;
 	logic Loop_Decision;
 
-	logic Branch_Correction
+	logic Branch_Correction;
 
 
 
@@ -141,8 +142,8 @@ module Core_Top #(
 		.branch_en_F(BP_en_Fetch),
 		.branch_en_EX(BP_en_Ex),
 
-		.PC_F(PC_out_Fetch[13:0]),
-		.PC_EX(PC_out_Ex[13:0]),
+		.PC_F(PC_out_Fetch),
+		.PC_EX(PC_out_Ex),
 
 		.branch_result(Branch_Predictor_Feedback),
 		.BP_decision(BP_Decision_Fetch)
@@ -254,7 +255,6 @@ module Core_Top #(
 	logic[1:0]Store_Type[1:0];
 	logic Branch_en_Dec[1:0];
 	logic Branch_en_Issue[1:0];
-	logic Branch_en_Ex[1:0];
 
 	Control_Unit Control_Unit(
         .op_code(OP_Code),
@@ -276,12 +276,12 @@ module Core_Top #(
     );
 
 	logic [1:0]Store_en;
-    assign Store_en[0] = {||Store_Type[0][1:0]};
-    assign Store_en[1] = {||Store_Type[1][1:0]};
+    assign Store_en[0] = {|Store_Type[0][1:0]};
+    assign Store_en[1] = {|Store_Type[1][1:0]};
 
     logic [1:0]Load_en;
-    assign Load_en[0] = {||Load_Type_Issue[0][2:0]};
-    assign Load_en[1] = {||Load_Type_Issue[1][2:0]}; 
+    assign Load_en[0] = {|Load_Type_Issue[0][2:0]};
+    assign Load_en[1] = {|Load_Type_Issue[1][2:0]}; 
 
 	logic [WIDTH-1:0]Imm_Sign_Extended_Dec[1:0];
 	logic [WIDTH-1:0]Imm_Sign_Extended_Issue[1:0];
@@ -487,7 +487,7 @@ module Core_Top #(
 		.shifter_size(ALU_Memory_Shift_Size_Ex),
         .op(ALU_Memory_Op_Ex),
 		
-        .result(ALU_Memory_Result_Ex),
+        .result(ALU_Memory_Result_Ex)
     );
 
 	//-----------MEMORY PIPELINE STAGE------------------//
@@ -533,7 +533,7 @@ module Core_Top #(
         .rd_Issue_Memory_Pipeline(),
         .rd_Ex_Branch_Pipeline(rd_Ex[0]),
         .rd_Ex_Memory_Pipeline(rd_Ex[1]),
-        .rd_Mem_Branch_Pipeline(rd_mem[0]),
+        .rd_Mem_Branch_Pipeline(rd_Mem[0]),
         .rd_Mem_Memory_Pipeline(rd_Mem[1]),
         .rd_Wb_Branch_Pipeline(rd_WB[0]),
         .rd_Wb_Memory_Pipeline(rd_WB[1]),

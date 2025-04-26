@@ -3,7 +3,7 @@ parameter InstLength = 256,
 parameter IMemInitFile = "imem.mem" 
     )(
     input  logic [31:0]Program_counter_IM,
-    output  logic [31:0]Instruction_IM[1:0],
+    output  logic [31:0]Instruction_IM[1:0]
     //TRAP HANDLING
 	/*
     output reg exception_flag_IM,

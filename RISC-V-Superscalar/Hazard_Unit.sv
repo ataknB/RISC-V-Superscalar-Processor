@@ -65,20 +65,20 @@ module Hazard_Unit(
 
 	output logic Stall_Fetch,
 	output logic Stall_Dec,
-	output logic Stall_Issue_Branch_Pipeline
-	output logic Stall_Issue_Memory_Pipeline
+	output logic Stall_Issue_Branch_Pipeline,
+	output logic Stall_Issue_Memory_Pipeline,
 	
 	output logic Flush_Ex,
 	output logic Flush_Dec
 );
 	
 	logic   [1:0]Store_en;
-    assign  Store_en[0] = {||Store_Type_Issue[0][1:0]};
-    assign  Store_en[1] = {||Store_Type_Issue[1][1:0]};
+    assign  Store_en[0] = {Store_Type_Issue[0][0] ||Store_Type_Issue[0][1] };
+    assign  Store_en[1] = {Store_Type_Issue[1][1] || Store_Type_Issue[1][0]};
 
     logic   [1:0]Load_en;
-    assign  Load_en[0] = {||Load_Type_Issue[0][2:0]};
-    assign  Load_en[1] = {||Load_Type_Issue[1][2:0]};
+    assign 	Load_en[0] = |Load_Type_Issue[0][2:0];
+    assign  Load_en[1] = |Load_Type_Issue[1][2:0];
 
     logic   [1:0]temp_mem;
     assign  temp_mem[0] = Store_en[0] || Load_en[0]; 
@@ -87,7 +87,7 @@ module Hazard_Unit(
 	always_comb
 	begin
 		//Aynı anda iki tane load, store  veya branch varsa stall yap
-		if((||Store_en[1:0] && ||Load_en[1:0]) || (&&Store_en[1:0]) || (&&Load_en[1:0]) || &&Branch_en[1:0])
+		if((|Store_en[1:0] && |Load_en[1:0]) || (&Store_en[1:0]) || (&Load_en[1:0]) || &Branch_en[1:0])
 		begin
 			Stall_Issue_Branch_Pipeline = 1'd1; // Stall Issue Stage
 			Stall_Issue_Memory_Pipeline = 1'd0;
@@ -95,7 +95,10 @@ module Hazard_Unit(
 			Stall_Dec = 1'd1; // Stall Decode Stage
 		end
 
-		else if(rs1_Issue[0] == rd_Issue[1] || rs1_Issue[1] == rd_Issue[0] || rs2_Issue[0] == rd_Issue[1] || rs2_Issue[1] == rd_Issue[0])
+		else if(rs1_Issue_Branch_Pipeline == rd_Issue_Memory_Pipeline || 
+				rs1_Issue_Memory_Pipeline == rd_Issue_Branch_Pipeline || 
+				rs2_Issue_Branch_Pipeline == rd_Issue_Memory_Pipeline || 
+				rs2_Issue_Memory_Pipeline == rd_Issue_Branch_Pipeline)
 		begin
 			Stall_Issue_Memory_Pipeline = 1'd1; // Stall Issue Stage
 			Stall_Issue_Branch_Pipeline = 1'd0;
@@ -123,7 +126,7 @@ module Hazard_Unit(
 				Forwarding_Mode_rs1_Branch_Pipeline = 3'b100; //Memory Memory Forwarding
 			end
 
-			else if(rs1_Issue_Branch_Pipeline == rd_WB_Memory_Pipeline && RF_Write_en_Mem && rs1_Ex_Branch_Pipeline != 5'd0)
+			else if(rs1_Issue_Branch_Pipeline == rd_Wb_Memory_Pipeline && RF_Write_en_Mem && rs1_Ex_Branch_Pipeline != 5'd0)
 			begin
 				Forwarding_Mode_rs1_Branch_Pipeline = 3'b110; //Memory Writeback Forwarding
 			end
@@ -157,7 +160,7 @@ module Hazard_Unit(
 				Forwarding_Mode_rs2_Branch_Pipeline = 3'b100; //Memory Memory Forwarding
 			end
 
-			else if(rs2_Issue_Branch_Pipeline == rd_WB_Memory_Pipeline && RF_Write_en_Mem && rs2_Ex_Branch_Pipeline != 5'd0)
+			else if(rs2_Issue_Branch_Pipeline == rd_Wb_Memory_Pipeline && RF_Write_en_Mem && rs2_Ex_Branch_Pipeline != 5'd0)
 			begin
 				Forwarding_Mode_rs2_Branch_Pipeline = 3'b110; //Memory Writeback Forwarding
 			end
@@ -191,7 +194,7 @@ module Hazard_Unit(
 				Forwarding_Mode_rs1_Memory_Pipeline = 3'b100; //Memory Memory Forwarding
 			end
 
-			else if(rs1_Issue_Memory_Pipeline == rd_WB_Memory_Pipeline && RF_Write_en_Mem && rs1_Ex_Branch_Pipeline != 5'd0)
+			else if(rs1_Issue_Memory_Pipeline == rd_Wb_Memory_Pipeline && RF_Write_en_Mem && rs1_Ex_Branch_Pipeline != 5'd0)
 			begin
 				Forwarding_Mode_rs1_Memory_Pipeline = 3'b110; //Memory Writeback Forwarding
 			end
@@ -225,7 +228,7 @@ module Hazard_Unit(
 				Forwarding_Mode_rs2_Memory_Pipeline = 3'b100; //Memory Memory Forwarding
 			end
 
-			else if(rs2_Issue_Memory_Pipeline == rd_WB_Memory_Pipeline && RF_Write_en_Mem && rs2_Ex_Branch_Pipeline != 5'd0)
+			else if(rs2_Issue_Memory_Pipeline == rd_Wb_Memory_Pipeline && RF_Write_en_Mem && rs2_Ex_Branch_Pipeline != 5'd0)
 			begin
 				Forwarding_Mode_rs2_Memory_Pipeline = 3'b110; //Memory Writeback Forwarding
 			end
@@ -266,7 +269,7 @@ module Hazard_Unit(
 		end	
 		
 
-		if()
+		//if()
 	end
 
 	

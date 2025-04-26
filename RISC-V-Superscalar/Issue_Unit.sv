@@ -11,7 +11,7 @@ module Issue_Unit #(
     input logic     [1:0]Mem_Read_en_Issue,
     input logic     [1:0]Mem_Write_en_Issue,
     input logic     [1:0]Sign_Extender_en_Issue,
-    input logic     [ALU_OP-1:0]ALU_OP_Issue[1:0];
+    input logic     [ALU_OP-1:0]ALU_OP_Issue[1:0],
     input logic     [1:0]JAL_en_Issue,
     input logic     [1:0]JALR_en_Issue,
     input logic     [LOAD_TYPE-1:0]Load_Type_Issue[1:0],
@@ -54,7 +54,7 @@ module Issue_Unit #(
     output logic    [WIDTH-1:0]Memory_Pipeline_shift_size_out,
     output logic    [WIDTH-1:0]Memory_Pipeline_ALU_OP_out,
     output logic    [WIDTH-1:0]Memory_Pipeline_Mem_Read_en_out,
-    output logic    [WIDTH-1:0]Memory_Pipeline_Mem_Write_en_out,
+    output logic    [WIDTH-1:0]Memory_Pipeline_Mem_Write_en_out
 
 
 
@@ -79,12 +79,12 @@ module Issue_Unit #(
     logic    [WIDTH-1:0]Memory_Pipeline_Mem_Write_en;
 
     logic   [1:0]Store_en;
-    assign  Store_en[0] = {||Store_Type_Issue[0][1:0]};
-    assign  Store_en[1] = {||Store_Type_Issue[1][1:0]};
+    assign  Store_en[0] = {|Store_Type_Issue[0][1:0]};
+    assign  Store_en[1] = {|Store_Type_Issue[1][1:0]};
 
     logic   [1:0]Load_en;
-    assign  Load_en[0] = {||Load_Type_Issue[0][2:0]};
-    assign  Load_en[1] = {||Load_Type_Issue[1][2:0]};
+    assign  Load_en[0] = {|Load_Type_Issue[0][2:0]};
+    assign  Load_en[1] = {|Load_Type_Issue[1][2:0]};
 
     logic   [1:0]temp_mem;
     assign  temp_mem[0] = Store_en[0] || Load_en[0];
@@ -179,7 +179,7 @@ module Issue_Unit #(
         endcase
         end
 
-        else if(Branch_En[0] || Branch_en[1])
+        else if(Branch_en[0] || Branch_en[1])
         begin
             case(temp_mem)
             2'b00 , 2'b01 , 2'b11: //İki tarafta da yok
