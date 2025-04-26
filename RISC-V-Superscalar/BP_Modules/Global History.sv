@@ -1,3 +1,4 @@
+`include "Header_File.svh"
 module GlobalHistoryBP(
     input logic clk,
     inpuy logic rst,

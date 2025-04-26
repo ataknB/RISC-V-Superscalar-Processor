@@ -1,7 +1,9 @@
-module Kogge_Stone#(
-	parameter WIDTH = 32,
+`include "Header_File.svh"
+module Kogge_Stone
+	#(
 	parameter X = 161
-	)(
+	)
+	(
 	input logic [WIDTH-1 : 0]in0,
 	input logic [WIDTH-1 : 0]in1,
 	input logic sub_en,// 1 = en

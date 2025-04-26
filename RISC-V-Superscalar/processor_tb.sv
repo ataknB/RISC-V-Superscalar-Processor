@@ -1,10 +1,10 @@
-module processor_top_tb;
-
+`include "Header_File.svh"
+module Core_Top_tb;
     logic clk;
     logic rst;
     integer i;
   // Instance of the processor_top module
-  Processor_Top tb(
+  Core_Top tb(
     .clk(clk),
     .rst(rst)
   );

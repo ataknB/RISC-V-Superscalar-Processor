@@ -1,3 +1,4 @@
+`include "Header_File.svh"
 module Forwarding_MUX (
 	input logic [WIDTH-1:0]Normal,
 	input logic [WIDTH-1:0]Branch_Execute,

@@ -1,5 +1,5 @@
-module Memory #(
-	)(
+`include "Header_File.svh"
+module Memory (
 		input logic mem_read_en,
 		input logic mem_write_en,
 		

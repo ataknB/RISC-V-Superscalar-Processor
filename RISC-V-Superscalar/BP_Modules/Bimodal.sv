@@ -1,3 +1,4 @@
+`include "Header_File.svh"
 module BimodalBP(
     input logic clk,
     input logic rst,

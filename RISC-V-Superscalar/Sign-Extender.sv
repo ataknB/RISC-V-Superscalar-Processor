@@ -1,3 +1,4 @@
+`include "Header_File.svh"
 module Sign_Extender (
     input  logic [31:0] in [1:0],                 // Giriş: 32-bit immediate değeri, iki talimat için dizi [0] ve [1]
     input  logic [4:0]  op_code [1:0],           // Giriş: 5-bit op_code, iki talimat için dizi [0] ve [1]

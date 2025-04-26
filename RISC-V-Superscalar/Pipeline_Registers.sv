@@ -1,3 +1,4 @@
+`include "Header_File.svh"
 module Decode_Register (
     input  logic        clk,                              // Giriş: Saat sinyali
     input  logic        rst,                              // Giriş: Asenkron sıfırlama (negatif kenar)

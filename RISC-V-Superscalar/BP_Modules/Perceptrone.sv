@@ -1,3 +1,4 @@
+`include "Header_File.svh"
 module Perceptrone_BP#(
     parameter H = 10,           // GHR uzunluğu
     parameter N = 1024,         // Tablo satır sayısı

@@ -1,6 +1,5 @@
-module LoopDetector #(
-    parameter WIDTH = 32
-    )(
+`include "Header_File.svh"
+module LoopDetector (
     input logic clk,
     input logic rst,
 

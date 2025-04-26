@@ -1,6 +1,9 @@
-module MUX_PC #(
-	parameter WIDTH = 32
-	)(
+`include "Header_File.svh"
+module MUX_PC 
+	// #(
+	// parameter WIDTH = 32
+	// )
+	(
 	input logic [WIDTH-1:0]jump, 
 	input logic [WIDTH-1:0]branch, 
 	input logic [WIDTH-1:0]normal_F,

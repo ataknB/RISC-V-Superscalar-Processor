@@ -1,3 +1,4 @@
+`include "Header_File.svh"
 module Control_Unit (
     input  logic [4:0] op_code [1:0],      // Giriş: 5-bit op_code, iki talimat için dizi [0] ve [1]
     input  logic [3:0] sub_op_code [1:0],  // Giriş: 4-bit sub_op_code, iki talimat için dizi [0] ve [1]

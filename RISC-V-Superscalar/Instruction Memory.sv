@@ -1,3 +1,4 @@
+`include "Header_File.svh"
 module Instruction_Memory #(
 parameter InstLength = 256,
 parameter IMemInitFile = "imem.mem" 

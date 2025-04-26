@@ -1,7 +1,10 @@
-module Issue_Unit #(
-    parameter WIDTH = 32,
-    parameter LOAD_TYPE = 3
-    )(
+`include "Header_File.svh"
+module Issue_Unit 
+    // #(
+    // parameter WIDTH = 32,
+    // parameter LOAD_TYPE = 3
+    // )
+    (
     //[0] önce gelen komut
 
     input logic    [WIDTH-1:0]rs1[1:0],

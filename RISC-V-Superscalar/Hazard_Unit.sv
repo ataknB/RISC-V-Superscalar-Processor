@@ -1,3 +1,4 @@
+`include "Header_File.svh"
 module Hazard_Unit(
 	input logic 	[4:0]rs1_Dec_Branch_Pipeline,
 	input logic 	[4:0]rs1_Dec_Memory_Pipeline,

@@ -1,11 +1,13 @@
-module ALU #(
-		parameter WIDTH = 32,
-		parameter OP = 4
-	)
+`include "Header_File.svh"
+module ALU 
+	// #(
+	// 	parameter WIDTH = 32,
+	// 	parameter OP = 4
+	// )
 	(
 		input logic [WIDTH-1:0]rs1, 
 		input logic [WIDTH-1:0]rs2, 
-		input logic [OP-1:0]op, 
+		input logic [ALU_OP-1:0]op, 
 		input logic [4:0]shifter_size,
 	/*
 		0 add = 4'b0000

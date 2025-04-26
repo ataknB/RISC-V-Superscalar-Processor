@@ -1,14 +1,5 @@
 `include "Header_File.svh"
-module Core_Top #(
-	parameter WIDTH = 32,
-	parameter RS = 5,
-	parameter IMM = 32,
-	parameter SUB_OPCODE = 4,
-	parameter LOAD_TYPE  = 3,
-	parameter ALU_OP = 4,
-	parameter FORWARD_MODE = 2
-
-	)(
+module Core_Top (
 	input logic clk,
 	input logic rst
 	);

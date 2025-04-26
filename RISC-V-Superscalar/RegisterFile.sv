@@ -1,20 +1,23 @@
-module RF#(
-	parameter RS = 5,
-	parameter RD = 32
+`include "Header_File.svh"
+module RF
+	// #(
+	// parameter RS = 5,
+	// parameter RD = 32
 	
-	)(
+	// )
+	(
 	input logic clk,
 	input logic rst,
 
 	input logic [RS-1:0]rs1[1:0],
 	input logic [RS-1:0]rs2[1:0],
 	input logic [RS-1:0]rd[1:0],
-	input logic [RD-1:0]wd[1:0],
+	input logic [WIDTH-1:0]wd[1:0],
 	
 	input logic write_en[1:0],
 	
-	output logic [RD-1:0]rd1[1:0],
-	output logic [RD-1:0]rd2[1:0]
+	output logic [WIDTH-1:0]rd1[1:0],
+	output logic [WIDTH-1:0]rd2[1:0]
 	
 	);	
 
