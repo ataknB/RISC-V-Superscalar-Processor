@@ -5,7 +5,7 @@ module Decoder
 //     parameter RD = 5
 // )
 (
-    input logic  [31:0] inst [1:0],
+    input logic  [WIDTH-1:0] inst [1:0],
 
     output logic [4:0] op_code [1:0],
     output logic [3:0] sub_op_code [1:0],
@@ -14,7 +14,7 @@ module Decoder
     output logic [RS-1:0] rs2 [1:0],
     output logic [RD-1:0] rd [1:0],
 
-    output logic [31:0] imm [1:0],
+    output logic [WIDTH-1:0] imm [1:0],
     output logic [4:0] shift_size [1:0]
 );
 

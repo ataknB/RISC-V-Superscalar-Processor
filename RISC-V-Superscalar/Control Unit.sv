@@ -11,7 +11,7 @@ module Control_Unit (
     output logic [1:0] JALR_en ,      // Çıkış: JALR komutu aktifleştirici, 1-bit, 2 elemanlı
     output logic [1:0] JAL_en ,       // Çıkış: JAL komutu aktifleştirici, 1-bit, 2 elemanlı
     output logic [1:0] sign_extender_en ,    // Çıkış: İşaret genişletici aktifleştirici, 1-bit, 2 elemanlı
-    output logic [1:0] sign_extender_type ,  // Çıkış: İşaret genişletici tipi (1: unsigned, 0: signed), 1-bit, 2 elemanlı
+    output logic [1:0] sign_extender_type [1:0],  // Çıkış: İşaret genişletici tipi (1: unsigned, 0: signed), 1-bit, 2 elemanlı
     output logic [2:0] load_type [1:0],    // Çıkış: Yükleme tipi (000: NA, 001: lb, 010: lbu, 011: lh, 100: lhu, 101: lw), 3-bit, 2 elemanlı
     output logic [1:0] store_type [1:0],   // Çıkış: Depolama tipi (00: NA, 01: sb, 10: sh, 11: sw), 2-bit, 2 elemanlı
     output logic [3:0] alu_op [1:0]        // Çıkış: ALU işlem kontrolü, 4-bit, 2 elemanlı

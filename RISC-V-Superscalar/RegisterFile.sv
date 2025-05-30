@@ -15,7 +15,8 @@ module RF(
     input logic [WIDTH-1:0] PC_out_Memory,
     input logic [WIDTH-1:0] PC_out_Branch,
 
-    input logic [1:0] write_en ,
+    input logic write_en_Memory,
+    input logic write_en_Branch,
 
     output logic [WIDTH-1:0] rd1 [1:0],
     output logic [WIDTH-1:0] rd2 [1:0]
@@ -34,7 +35,10 @@ module RF(
 
 
     // Write operations
-    always_ff @(negedge clk , negedge rst) begin
+    always_ff @(negedge clk , negedge rst)
+    begin
+        reg_data[0] <= 32'd0; // x0 is always zero
+
         if (!rst) 
         begin
                 reg_data <= '{default: 32'd0};
@@ -57,7 +61,7 @@ module RF(
 
             else
             begin
-                case(write_en)
+                case({write_en_Memory, write_en_Branch})
                     2'b01: reg_data[rd_Branch] <= wd_Branch;
                     2'b10: reg_data[rd_Memory] <= wd_Memory;
                     2'b11: 

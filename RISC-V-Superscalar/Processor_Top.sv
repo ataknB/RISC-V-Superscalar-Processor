@@ -4,19 +4,41 @@ module Core_Top (
 	input logic rst
 	);
 
-	logic [WIDTH-1:0] PC_in;
-	logic [WIDTH-1:0] Normal_F;
+	logic [WIDTH-1:0] PC_in [1:0];
+	logic [WIDTH-1:0] Normal_F[1:0];
 	
 
-	Kogge_Stone PC_Incrementer(
-		.in0(PC_in),
+	Kogge_Stone PC_Incrementer_0(
+		.in0(PC_out_F[0]),
 		.in1(32'd4),
 		.sub_en(1'b0),
 
-		.out(Normal_F),
+		.out(Normal_F[0])
 	);
 
-	logic [WIDTH-1:0] PC_out_F;
+    Kogge_Stone PC_Incremente_1(
+		.in0(PC_out_F[0]),
+		.in1(32'd8),
+		.sub_en(1'b0),
+
+		.out(Normal_F[1])
+	);
+
+
+	logic [WIDTH-1:0] PC_out_F[1:0];
+    
+    logic [1:0]temp_PC_MUX_controller;
+    assign temp_PC_MUX_controller = 2'd0;
+
+
+    always_comb 
+    begin 
+        case(temp_PC_MUX_controller)
+            2'b00: PC_in = Normal_F;
+
+            default: PC_in = '{default: 32'd0}; // Default case to avoid latches
+        endcase    
+    end
 
 	PC PC(
 		.clk(clk),
@@ -26,29 +48,29 @@ module Core_Top (
 		.PC_out(PC_out_F)
 	);
 
-	logic [WIDTH-1:0]InstructionMemory_out_F[1:0;]
+	logic [WIDTH-1:0]InstructionMemory_out_F[1:0];
 
-	Instruction_Memory Instruction_Memory_(
+	Instruction_Memory Instruction_Memory(
         .Program_counter_IM(PC_out_F),          
         .Instruction_IM(InstructionMemory_out_F)     
     );
 
-	logic [WIDTH-1:0] Normal_De;
-	logic [WIDTH-1:0] PC_out_De;
+	logic [WIDTH-1:0] Normal_De[1:0];
+	logic [WIDTH-1:0] PC_out_De[1:0];
 	logic [WIDTH-1:0] InstructionMemory_out_De[1:0];
 
 	//////////////////////////////////////////////////		
-	Decode_Register Decode_Reg_(
+	Decode_Register Decode_Reg(
         .clk                    (clk),
         .rst                    (rst),
 
-        .normal_F               (Normal_F),
+        .Normal_F               (Normal_F),
         .PC_out_F               (PC_out_F),
         .InstructionMemory_out_F(InstructionMemory_out_F),
 
-        .normal_DE              (Normal_De),
-        .PC_out_DE              (PC_out_De),
-        .InstructionMemory_out_DE(InstructionMemory_out_De)
+        .Normal_De              (Normal_De),
+        .PC_out_De              (PC_out_De),
+        .InstructionMemory_out_De(InstructionMemory_out_De)
     );
 	//////////////////////////////////////////////////
 
@@ -57,11 +79,11 @@ module Core_Top (
 	logic [RS-1:0] rs1_De[1:0];
 	logic [RS-1:0] rs2_De[1:0];
 	logic [RD-1:0] rd_De[1:0];
-	logic [31:0] imm_De[1:0];
+	logic [WIDTH-1:0] imm_De[1:0];
 	logic [4:0] shift_size_De[1:0];
 
 	Decoder Decoder(
-		.inst(InstructionMemory_out_DE),
+		.inst(InstructionMemory_out_De),
         
         .op_code(op_code),
         .sub_op_code(sub_op_code),
@@ -71,22 +93,22 @@ module Core_Top (
         .rd(rd_De),
         
         .imm(imm_De),
-        .shift_size(shift_size_DE)
+        .shift_size(shift_size_De)
 	);
 
 	logic [LOAD_TYPE-1:0]load_type_De[1:0];
 	logic [1:0]store_type_De[1:0];
-	logic [1:0]imm_en_De[1:0];
-	logic [1:0]rf_write_en_De[1:0];
+	logic [1:0]imm_en_De;
+	logic [1:0]rf_write_en_De;
 	logic [1:0]mem_read_en_De;
 	logic [1:0]mem_write_en_De;
 
-	logic [1:0]sign_extender_en_De[1:0];
+	logic [1:0]sign_extender_en_De;
 	logic [1:0]sign_extender_type_De[1:0];
 	logic [ALU_OP-1:0]alu_op_De[1:0];
-    logic [1:0]Branch_en[1:0];
+    logic [1:0]Branch_en_De[1:0];
 
-	Control_Unit Control_Unit_(
+	Control_Unit Control_Unit(
         .op_code(op_code),
         .sub_op_code(sub_op_code),
 		
@@ -109,22 +131,24 @@ module Core_Top (
     logic [RS-1:0] rs2_Issue[1:0];
     logic [RD-1:0] rd_Issue[1:0];
     logic [31:0]   imm_Issue[1:0];
-    logic [WIDTH-1:0] shift_size_Issue[1:0];
+    logic [4:0] shift_size_Issue[1:0];
 
-    logic [LOAD_TYPE-1:0] load_type_Issue;
-    logic [1:0] store_type_Issue;
-    logic [1:0] imm_Issue;
+    logic [LOAD_TYPE-1:0] load_type_Issue[1:0];
+    logic [1:0] store_type_Issue[1:0];
     logic [1:0] rf_write_en_Issue;
-    logic       mem_read_en_Issue;
-    logic       mem_write_en_Issue;
+    logic [1:0] mem_read_en_Issue;
+    logic [1:0] mem_write_en_Issue;
     logic [1:0] sign_extender_en_Issue;
-    logic [1:0] sign_extender_type_Issue;
-    logic [1:0] alu_op_Issue;
+    logic [1:0] sign_extender_type_Issue[1:0];
+    logic [3:0] alu_op_Issue[1:0];
     logic [OPCODE-1:0]op_code_Issue[1:0];
     logic [WIDTH-1:0] PC_out_Issue[1:0];
-    logic [1:0]Branch_en_Issue[1:0];  
 
-    logic imm_en_Issue[1:0];
+    logic [1:0]Branch_en_Issue[1:0];  
+    logic [1:0]temp_Branch_en_Issue;  
+     
+
+    logic [1:0]imm_en_Issue;
 
 	///////////////////////////////////////
 	Issue_Register Issue_Register (
@@ -133,7 +157,6 @@ module Core_Top (
 
         .Normal_De(Normal_De),
         .PC_out_De(PC_out_De),
-        .InstructionMemory_out_De(InstructionMemory_out_De),
 
         .rs1_De(rs1_De),
         .rs2_De(rs2_De),
@@ -143,7 +166,6 @@ module Core_Top (
         .shift_size_De(shift_size_De),
         .load_type_De(load_type_De),
         .store_type_De(store_type_De),
-        .imm_en(imm_en),
         .rf_write_en_De(rf_write_en_De),
         .mem_read_en_De(mem_read_en_De),
         .mem_write_en_De(mem_write_en_De),
@@ -154,7 +176,7 @@ module Core_Top (
 
         .Branch_en_De(Branch_en_De),
 
-        .Branch_en_Issue(Branch_en_Issue)
+        .Branch_en_Issue(Branch_en_Issue),
 
         .PC_out_Issue(PC_out_Issue),
         .rs1_Issue(rs1_Issue),
@@ -172,11 +194,23 @@ module Core_Top (
         .sign_extender_type_Issue(sign_extender_type_Issue),
         .op_code_Issue(op_code_Issue),
         .alu_op_Issue(alu_op_Issue)
-    )
+    );
 	///////////////////////////////////////
 
-    logic [WIDTH-1:0]rd1_Issue;
-    logic [WIDTH-1:0]rd2_Issue;
+    logic [WIDTH-1:0]rd1_Issue[1:0];
+    logic [WIDTH-1:0]rd2_Issue[1:0];
+    
+    logic [WIDTH-1:0]ALU_Branch_Out_Mem;
+    logic [4:0] Memory_Pipeline_rd_WB;
+    logic Memory_Pipeline_RF_en_WB;
+    logic [WIDTH-1:0] Memory_Pipeline_PC_WB;
+    logic Memory_Read_en_WB;
+
+    logic [WIDTH-1:0] ALU_Branch_Out_WB;
+    logic [4:0] Branch_Pipeline_rd_WB;
+    logic [WIDTH-1:0] Branch_Pipeline_PC_WB;
+    logic Branch_Pipeline_RF_en_WB;
+    logic [WIDTH-1:0]RF_wd_Memory_in_WB;
 
     RF RF(
         .clk(clk),
@@ -188,13 +222,14 @@ module Core_Top (
         .rd_Branch(Branch_Pipeline_rd_WB),
         .rd_Memory(Memory_Pipeline_rd_WB),
 
-        .wd_Branch(ALU_Branch_Out_Mem),
+        .wd_Branch(ALU_Branch_Out_WB),
         .wd_Memory(RF_wd_Memory_in_WB),
 
         .PC_out_Memory(Memory_Pipeline_PC_WB),
         .PC_out_Branch(Branch_Pipeline_PC_WB),
 
-        .write_en(rf_write_en_Issue),
+        .write_en_Branch(Branch_Pipeline_RF_en_WB),
+        .write_en_Memory(Memory_Pipeline_RF_en_WB),
 
         .rd1(rd1_Issue),
         .rd2(rd2_Issue)
@@ -229,7 +264,7 @@ module Core_Top (
 
     logic [WIDTH-1:0]imm_out[1:0];
 
-    Sign_Extender sign_ext_inst (
+    Sign_Extender Sign_Extender (
         .in(imm_Issue),
         .op_code(op_code_Issue),
         .sign_extender_en(sign_extender_en_Issue),
@@ -237,7 +272,7 @@ module Core_Top (
         .imm_out(imm_out)
     );
 
-    Issue_Unit issue_unit_inst (
+    Issue_Unit Issue_Unit(
         .rs1(rd1_Issue),
         .rs2(rd2_Issue),
         .RF_Write_en_Issue(rf_write_en_Issue),
@@ -254,12 +289,12 @@ module Core_Top (
         .imm_en(imm_en_Issue),
         .rd(rd_Issue),
         .PC(PC_out_Issue),
-        .Branch_en(Branch_en_Issue),
+        //.Branch_en(Branch_en_Issue),
 
         .Branch_Pipeline_rs1_out(Branch_Pipeline_rs1_out_Issue),
         .Branch_Pipeline_rs2_out(Branch_Pipeline_rs2_out_Issue),
         .Branch_Pipeline_rd_out(Branch_Pipeline_rd_out_Issue),
-        .Branch_Pipeline_PC_out(Branch_Pipeline_PC_out)_Issue,
+        .Branch_Pipeline_PC_out(Branch_Pipeline_PC_out_Issue),
         .Branch_Pipeline_imm_out(Branch_Pipeline_imm_out_Issue),
         .Branch_Pipeline_imm_en_out(Branch_Pipeline_imm_en_out_Issue),
         .Branch_Pipeline_shift_size_out(Branch_Pipeline_shift_size_out_Issue),
@@ -279,7 +314,7 @@ module Core_Top (
         .Memory_Pipeline_Mem_Read_en_out(Memory_Pipeline_Mem_Read_en_out_Issue),
         .Memory_Pipeline_Mem_Write_en_out(Memory_Pipeline_Mem_Write_en_out_Issue),
         .Memory_Pipeline_JAL_en_out(Memory_Pipeline_JAL_en_out_Issue),
-        .Memory_Pipeline_JALR_en_out(Memory_Pipeline_JALR_en_out_Issue)
+        .Memory_Pipeline_JALR_en_out(Memory_Pipeline_JALR_en_out_Issue),
         .Memory_Pipeline_RF_write_en_out(Memory_Pipeline_RF_write_en_out_Issue)
     );
     //hem ımmediate değeri hem de rs2 değeri gidiyor mux execute da olcak 
@@ -290,7 +325,8 @@ module Core_Top (
     logic [WIDTH-1:0]Memory_Pipeline_ALU_in1;
     logic [WIDTH-1:0]Memory_Pipeline_ALU_in2;
     
-	Forwarding_MUX  u_Forwarding_MUX_Branch_1 (
+    logic [WIDTH-1:0]RF_wd_Memory_in_Mem;
+	Forwarding_MUX  Forwarding_MUX_Branch_1 (
         .Normal           (Branch_Pipeline_rs1_out_Issue),  
         .Branch_Execute   (Branch_ALU_out),  
         .Memory_Execute   (Memory_ALU_out),  
@@ -302,7 +338,7 @@ module Core_Top (
         .out              (Branch_Pipeline_ALU_in1)   
     );
 
-    Forwarding_MUX  u_Forwarding_MUX_Branch_2 (
+    Forwarding_MUX  Forwarding_MUX_Branch_2 (
         .Normal           (Branch_Pipeline_rs2_out_Issue),  
         .Branch_Execute   (Branch_ALU_out),  
         .Memory_Execute   (Memory_ALU_out),  
@@ -314,7 +350,7 @@ module Core_Top (
         .out              (Branch_Pipeline_ALU_in2)   
     );
 
-    Forwarding_MUX  u_Forwarding_MUX_Memory_1 (
+    Forwarding_MUX  Forwarding_MUX_Memory_1 (
         .Normal           (Memory_Pipeline_rs1_out_Issue),  
         .Branch_Execute   (Branch_ALU_out),  
         .Memory_Execute   (Memory_ALU_out),  
@@ -326,7 +362,7 @@ module Core_Top (
         .out              (Memory_Pipeline_ALU_in1)   
     );
 
-    Forwarding_MUX  u_Forwarding_MUX_Memory_2 (
+    Forwarding_MUX  Forwarding_MUX_Memory_2 (
         .Normal           (Memory_Pipeline_rs2_out_Issue),  
         .Branch_Execute   (Branch_ALU_out),  
         .Memory_Execute   (Memory_ALU_out),  
@@ -363,7 +399,7 @@ module Core_Top (
     logic Memory_Pipeline_RF_write_en_out_Execute;
 
     ///////////////////////////////////
-    Execute_Register execute_register_inst (
+    Execute_Register Execute_Register (
         .clk(clk),
         .rst(rst),
 
@@ -425,9 +461,12 @@ module Core_Top (
     logic [WIDTH-1:0]Branch_ALU_rs2;
     logic [WIDTH-1:0]Memory_ALU_rs2;
 
+    logic [WIDTH-1:0]Memory_ALU_out;
+    logic [WIDTH-1:0]Branch_ALU_out;
+
     always_comb
     begin
-        if(Memory_Pipeline_imm_en_Execute == 1'b1)
+        if(Memory_Pipeline_imm_en_out_Execute == 1'b1)
         begin
             Memory_ALU_rs2 = Memory_Pipeline_Imm_out_Execute;
         end
@@ -436,7 +475,7 @@ module Core_Top (
             Memory_ALU_rs2 = Memory_Pipeline_rs2_out_Execute;
         end
 
-        if(Branch_Pipeline_imm_en_Execute == 1'b1)
+        if(Branch_Pipeline_imm_en_out_Execute == 1'b1)
         begin
             Branch_ALU_rs2 = Branch_Pipeline_Imm_out_Execute;
         end
@@ -447,50 +486,55 @@ module Core_Top (
     end
 
     ALU Branch_ALU(
-        .rs1(Branch_Pipeline_rs1_out),
+        .rs1(Branch_Pipeline_rs1_out_Execute),
         .rs2(Branch_ALU_rs2),
-        .op(Branch_Pipeline_ALU_OP_out),
-        .shifter_size(Branch_Pipeline_shift_size_out)
+        .op(Branch_Pipeline_ALU_OP_out_Execute),
+        .shifter_size(Branch_Pipeline_shift_size_out_Execute),
 
         .result(Branch_ALU_out),
         .branch_control(Branch_Feeadback_out_Execute) 
     );
 
     ALU Memory_ALU(
-        .rs1(Memory_Pipeline_rs1_out),
+        .rs1(Memory_Pipeline_rs1_out_Execute),
         .rs2(Memory_ALU_rs2),
-        .op(Memory_Pipeline_ALU_OP_out),
-        .shifter_size(Memory_Pipeline_shift_size_out)
-        .result(Memory_ALU_out),
+        .op(Memory_Pipeline_ALU_OP_out_Execute),
+        .shifter_size(Memory_Pipeline_shift_size_out_Execute),
+        .result(Memory_ALU_out)
     );
 
-    logic [WDITH-1:0]ALU_Memory_Out_Memory_Mem;
-    logic [WDITH-1:0]ALU_Branch_Out_Memory_Mem;
+    logic [WIDTH-1:0]ALU_Memory_Out_Memory_Mem;
+    logic [WIDTH-1:0]ALU_Branch_Out_Memory_Mem;
     logic [4:0]Memory_Pipeline_rd_Mem;
     logic Memory_Write_en_Mem;
     logic Memory_Read_en_Mem;
     logic [WIDTH-1:0]Memory_Pipeline_rs2_Mem;
     logic [WIDTH-1:0]Memory_Pipeline_PC_Mem;
 
-    logic [WIDTH-1:0]ALU_Branch_Out_Mem;
+    
     logic [4:0]Branch_Pipeline_rd_Mem;
     logic [WIDTH-1:0]Branch_Pipeline_PC_Mem;
 
     ///////////////////////////////////
-     Memory_Register mem_reg_inst (
+    logic Branch_Pipeline_RF_write_en_out_Mem;
+    logic Memory_Pipeline_RF_write_en_out_Mem;
+
+     Memory_Register Memory_Register (
         .clk                        (clk),
         .rst                        (rst),
 
         .ALU_Memory_Out_Execute     (Memory_ALU_out),
         .Memory_Pipeline_rd_Execute (Memory_Pipeline_rd_out_Execute),
-        .Memory_Write_en_Execute    (Memory_Pipeline_Mem_Write_en),
+        .Memory_Write_en_Execute    (Memory_Pipeline_Mem_Write_en_out_Execute),
         .Memory_Read_en_Execute     (Memory_Pipeline_Mem_Read_en_out_Execute),
         .Memory_Pipeline_rs2_Execute(Memory_Pipeline_rs2_out_Execute),
         .Memory_Pipeline_PC_Execute (Memory_Pipeline_PC_out_Execute),
+        .Memory_Pipeline_RF_write_en_out_Execute(Memory_Pipeline_RF_write_en_out_Execute),
 
         .ALU_Branch_Out_Execute     (Branch_ALU_out),
         .Branch_Pipeline_rd_Execute (Branch_Pipeline_rd_out_Execute),
         .Branch_Pipeline_PC_Execute (Branch_Pipeline_PC_out_Execute),
+        .Branch_Pipeline_RF_write_en_out_Execute(Branch_Pipeline_RF_write_en_out_Execute),
 
         .ALU_Memory_Out_Mem         (ALU_Memory_Out_Memory_Mem),
         .Memory_Pipeline_rd_Mem     (Memory_Pipeline_rd_Mem),
@@ -498,10 +542,12 @@ module Core_Top (
         .Memory_Read_en_Mem         (Memory_Read_en_Mem),
         .Memory_Pipeline_rs2_Mem    (Memory_Pipeline_rs2_Mem),
         .Memory_Pipeline_PC_Mem     (Memory_Pipeline_PC_Mem),
+        .Memory_Pipeline_RF_write_en_out_Mem(Memory_Pipeline_RF_write_en_out_Mem),
 
         .ALU_Branch_Out_Mem         (ALU_Branch_Out_Mem),
         .Branch_Pipeline_rd_Mem     (Branch_Pipeline_rd_Mem),
-        .Branch_Pipeline_PC_Mem     (Branch_Pipeline_PC_Mem)
+        .Branch_Pipeline_PC_Mem     (Branch_Pipeline_PC_Mem),
+        .Branch_Pipeline_RF_write_en_out_Mem(Branch_Pipeline_RF_write_en_out_Mem)
     );
 
     //////////////////////////////////
@@ -514,53 +560,44 @@ module Core_Top (
         .address(ALU_Memory_Out_Memory_Mem),
         .mem_read_en(Memory_Read_en_Mem),
         .mem_write_en(Memory_Write_en_Mem),
-        .write_data(memory_Pipeline_rs2_Mem),
+        .write_data(Memory_Pipeline_rs2_Mem),
         .read_data(Memory_Data_Out)
     );
     
-    logic [WIDTH-1:0] ALU_Memory_Out_WB;
-    logic [WIDTH-1:0] Memory_Data_WB;
-    logic [4:0] Memory_Pipeline_rd_WB;
-    logic Memory_Pipeline_RF_en_WB;
-    logic [WIDTH-1:0] Memory_Pipeline_PC_WB;
-    logic Memory_Read_en_WB;
+    
+    
 
-    logic [WIDTH-1:0] ALU_Branch_Out_WB;
-    logic [4:0] Branch_Pipeline_rd_WB;
-    logic [WIDTH-1:0] Branch_Pipeline_PC_WB;
-    logic Branch_Pipeline_RF_en_WB;
-
-
-    logic [WIDTH-1:0]RF_wd_Memory_in_Mem;
-    logic [WIDTH-1:0]RF_wd_Memory_in_WB;
-
-    always_comb : RF_Mux
+    always_comb
     begin 
         if(Memory_Read_en_Mem)    
         begin
-            RF_wd_Memory_in_Mem = Memory_Data_WB;
+            RF_wd_Memory_in_Mem = Memory_Data_Out;
         end
 
         else 
         begin
-            RF_wd_Memory_in_Mem = ALU_Memory_Out_WB;
+            RF_wd_Memory_in_Mem = ALU_Memory_Out_Memory_Mem;
         end
     end
 
     ///////////////////////////////////
-    WriteBack_Register wb_reg (
+
+    logic [WIDTH-1:0] ALU_Memory_Out_WB;
+    logic [WIDTH-1:0] Memory_Data_WB;
+
+    WriteBack_Register WriteBack_Register (
         .clk(clk),
         .rst(rst),
 
         .RF_wd_Memory_in_Mem        (RF_wd_Memory_in_Mem),
         .Memory_Pipeline_rd_Mem    (Memory_Pipeline_rd_Mem),
-        .Memory_Pipeline_RF_en_Mem (Memory_Pipeline_RF_en_Mem),
+        .Memory_Pipeline_RF_en_Mem (Memory_Pipeline_RF_write_en_out_Mem),
         .Memory_Pipeline_PC_Mem    (Memory_Pipeline_PC_Mem),
         .Memory_Read_en_Mem         (Memory_Read_en_Mem),
 
         .ALU_Branch_Out_Mem        (ALU_Branch_Out_Mem),
         .Branch_Pipeline_rd_Mem    (Branch_Pipeline_rd_Mem),
-        .Branch_Pipeline_RF_en_Mem (Branch_Pipeline_RF_en_Mem),
+        .Branch_Pipeline_RF_en_Mem (Branch_Pipeline_RF_write_en_out_Mem),
         .Branch_Pipeline_PC_Mem    (Branch_Pipeline_PC_Mem),
 
         .RF_wd_Memory_in_WB         (RF_wd_Memory_in_WB),

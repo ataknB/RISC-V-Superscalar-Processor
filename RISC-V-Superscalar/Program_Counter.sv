@@ -5,8 +5,8 @@ module PC(
 	
 	input logic stall_F,
 	
-	input logic [31:0]PC_in,
-	output logic [31:0]PC_out
+	input logic [WIDTH-1:0]PC_in[1:0],
+	output logic [WIDTH-1:0]PC_out[1:0]
 );
 
 	always_ff @(posedge clk or negedge rst)
@@ -14,17 +14,18 @@ module PC(
 		
 		if(!rst)
 		begin
-			PC_out <= 32'd0;
+			PC_out[0] <= '{default: 32'd0};
+			PC_out[1] <= 32'd4;
 		end
 		
 		else
-			if(stall_F)
-				begin
-					PC_out <= PC_out;
-				end
-			else
-				begin
+			// if(stall_F)
+			// 	begin
+			// 		PC_out <= PC_out;
+			// 	end
+			// else
+			// 	begin
 					PC_out <= PC_in;
-				end
+				// end
 	end
 endmodule
