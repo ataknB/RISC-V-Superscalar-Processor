@@ -10,14 +10,14 @@ module Forwarding_MUX (
 	input logic [WIDTH-1:0]Branch_WB,
 	input logic [WIDTH-1:0]Memory_WB,
 
-	input logic [2:0]Forwarding_Mode,
+	input logic [2:0]Control_Signal, // Control signal to select the forwarding path
 
 	output logic [WIDTH-1:0]out
 	);
 
 	always_comb
 	begin
-		case(Forwarding_Mode)
+		case(Control_Signal)
 			3'b000: out = Normal; // Normal case
 			3'b001: out = Branch_Execute; // From Branch Execute Stage
 			3'b010: out = Memory_Execute; // From Memory Execute Stage
@@ -28,6 +28,5 @@ module Forwarding_MUX (
 			default: out = 32'd0; // Default case (should not happen)
 		endcase
 	end
-
-
 endmodule
+

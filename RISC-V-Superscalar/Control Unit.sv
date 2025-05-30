@@ -3,15 +3,15 @@ module Control_Unit (
     input  logic [4:0] op_code [1:0],      // Giriş: 5-bit op_code, iki talimat için dizi [0] ve [1]
     input  logic [3:0] sub_op_code [1:0],  // Giriş: 4-bit sub_op_code, iki talimat için dizi [0] ve [1]
     
-    output logic       imm_en [1:0],       // Çıkış: Immediate değeri seçici, 1-bit, 2 elemanlı
-    output logic       rf_write_en [1:0],  // Çıkış: Register dosyası yazma izni, 1-bit, 2 elemanlı
-    output logic       mem_read_en [1:0],  // Çıkış: Bellek okuma izni, 1-bit, 2 elemanlı
-    output logic       mem_write_en [1:0], // Çıkış: Bellek yazma izni, 1-bit, 2 elemanlı
+    output logic [1:0] imm_en ,       // Çıkış: Immediate değeri seçici, 1-bit, 2 elemanlı
+    output logic [1:0] rf_write_en ,  // Çıkış: Register dosyası yazma izni, 1-bit, 2 elemanlı
+    output logic [1:0] mem_read_en ,  // Çıkış: Bellek okuma izni, 1-bit, 2 elemanlı
+    output logic [1:0] mem_write_en , // Çıkış: Bellek yazma izni, 1-bit, 2 elemanlı
     output logic [1:0] branch_mode [1:0],  // Çıkış: Program sayacı kontrolü, 2-bit (01: normal, 10: jump, 11: branch, 00: NA), 2 elemanlı
-    output logic       JALR_en [1:0],      // Çıkış: JALR komutu aktifleştirici, 1-bit, 2 elemanlı
-    output logic       JAL_en [1:0],       // Çıkış: JAL komutu aktifleştirici, 1-bit, 2 elemanlı
-    output logic       sign_extender_en [1:0],    // Çıkış: İşaret genişletici aktifleştirici, 1-bit, 2 elemanlı
-    output logic       sign_extender_type [1:0],  // Çıkış: İşaret genişletici tipi (1: unsigned, 0: signed), 1-bit, 2 elemanlı
+    output logic [1:0] JALR_en ,      // Çıkış: JALR komutu aktifleştirici, 1-bit, 2 elemanlı
+    output logic [1:0] JAL_en ,       // Çıkış: JAL komutu aktifleştirici, 1-bit, 2 elemanlı
+    output logic [1:0] sign_extender_en ,    // Çıkış: İşaret genişletici aktifleştirici, 1-bit, 2 elemanlı
+    output logic [1:0] sign_extender_type ,  // Çıkış: İşaret genişletici tipi (1: unsigned, 0: signed), 1-bit, 2 elemanlı
     output logic [2:0] load_type [1:0],    // Çıkış: Yükleme tipi (000: NA, 001: lb, 010: lbu, 011: lh, 100: lhu, 101: lw), 3-bit, 2 elemanlı
     output logic [1:0] store_type [1:0],   // Çıkış: Depolama tipi (00: NA, 01: sb, 10: sh, 11: sw), 2-bit, 2 elemanlı
     output logic [3:0] alu_op [1:0]        // Çıkış: ALU işlem kontrolü, 4-bit, 2 elemanlı

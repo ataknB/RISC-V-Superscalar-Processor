@@ -2,8 +2,8 @@
 module Sign_Extender (
     input  logic [31:0] in [1:0],                 // Giriş: 32-bit immediate değeri, iki talimat için dizi [0] ve [1]
     input  logic [4:0]  op_code [1:0],           // Giriş: 5-bit op_code, iki talimat için dizi [0] ve [1]
-    input  logic        sign_extender_en [1:0],   // Giriş: İşaret genişletici aktifleştirici, 1-bit, iki talimat için dizi [0] ve [1]
-    input  logic        sign_extender_type [1:0], // Giriş: İşaret genişletici tipi (0: signed, 1: unsigned), 1-bit, iki talimat için dizi [0] ve [1]
+    input  logic [1:0]  sign_extender_en ,   // Giriş: İşaret genişletici aktifleştirici, 1-bit, iki talimat için dizi [0] ve [1]
+    input  logic [1:0]  sign_extender_type , // Giriş: İşaret genişletici tipi (0: signed, 1: unsigned), 1-bit, iki talimat için dizi [0] ve [1]
     
     output logic [31:0] imm_out [1:0]            // Çıkış: Genişletilmiş 32-bit immediate değeri, iki talimat için dizi [0] ve [1]
 );
