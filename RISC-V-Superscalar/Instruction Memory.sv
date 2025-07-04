@@ -3,8 +3,11 @@ module Instruction_Memory #(
 parameter InstLength = 256,
 parameter IMemInitFile = "imem.mem" 
     )(
-    input  logic [WIDTH-1:0]Program_counter_IM[1:0],
-    output  logic [WIDTH-1:0]Instruction_IM[1:0]
+    input  logic [WIDTH-1:0]Program_counter_IM_Pipeline_0,
+    input  logic [WIDTH-1:0]Program_counter_IM_Pipeline_1,
+
+    output  logic [WIDTH-1:0]Instruction_IM_Pipeline_0,
+    output  logic [WIDTH-1:0]Instruction_IM_Pipeline_1
     //TRAP HANDLING
 	/*
     output reg exception_flag_IM,
@@ -13,7 +16,13 @@ parameter IMemInitFile = "imem.mem"
 	
 	*/
     );
-   
+    
+    logic [WIDTH-1:0]Program_counter_IM[1:0];
+    assign Program_counter_IM[0] = Program_counter_IM_Pipeline_0;
+    assign Program_counter_IM[1] = Program_counter_IM_Pipeline_1;
+
+    logic [WIDTH-1:0]Instruction_IM[1:0];
+
     logic [31:0]Instraction_Memory[InstLength-1:0];
     initial begin
     $readmemh("imem.mem", Instraction_Memory);
@@ -28,6 +37,9 @@ parameter IMemInitFile = "imem.mem"
 	
 	assign Instruction_IM[0] = Instraction_Memory[Address_0];
 	assign Instruction_IM[1] = Instraction_Memory[Address_1];
+
+    assign Instruction_IM_Pipeline_0 = Instruction_IM[0];
+    assign Instruction_IM_Pipeline_1 = Instruction_IM[1];
 	
 	
 endmodule

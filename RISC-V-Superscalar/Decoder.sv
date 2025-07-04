@@ -1,22 +1,34 @@
 `include "Header_File.svh"
 module Decoder
-// #(
-//     parameter RS = 5,
-//     parameter RD = 5
-// )
 (
-    input logic  [WIDTH-1:0] inst [1:0],
+    input logic  [WIDTH-1:0] inst_0,
+    input logic  [WIDTH-1:0] inst_1,
 
-    output logic [4:0] op_code [1:0],
-    output logic [3:0] sub_op_code [1:0],
+    output logic [4:0] op_code_0 ,
+    output logic [4:0] op_code_1 ,
 
-    output logic [RS-1:0] rs1 [1:0], 
-    output logic [RS-1:0] rs2 [1:0],
-    output logic [RD-1:0] rd [1:0],
+    output logic [3:0] sub_op_code_0 ,
+    output logic [3:0] sub_op_code_1 ,
 
-    output logic [WIDTH-1:0] imm [1:0],
-    output logic [4:0] shift_size [1:0]
-);
+    output logic [RS-1:0] rs1_0, 
+    output logic [RS-1:0] rs1_1, 
+
+    output logic [RS-1:0] rs2_0,
+    output logic [RS-1:0] rs2_1,
+
+    output logic [RD-1:0] rd_0,
+    output logic [RD-1:0] rd_1,
+
+    output logic [WIDTH-1:0] imm_0,
+    output logic [WIDTH-1:0] imm_1,
+
+    output logic [4:0] shift_size_0,
+    output logic [4:0] shift_size_1
+);  
+
+    logic [WIDTH-1:0] inst [1:0];
+    assign inst[0] = inst_0;
+    assign inst[1] = inst_1;
 
     integer i;
 
@@ -135,5 +147,36 @@ module Decoder
             endcase
         end
     end
+
+    logic [4:0] op_code [1:0];
+    logic [3:0] sub_op_code [1:0];
+
+    logic [RS-1:0] rs1 [1:0]; 
+    logic [RS-1:0] rs2 [1:0];
+    logic [RD-1:0] rd [1:0];
+
+    logic [WIDTH-1:0] imm [1:0];
+    logic [4:0] shift_size [1:0];
+
+    assign op_code_0 = op_code[0];
+    assign op_code_1 = op_code[1];
+
+    assign sub_op_code_0 = sub_op_code[0];
+    assign sub_op_code_1 = sub_op_code[1];
+
+    assign rs1_0 = rs1[0];
+    assign rs1_1 = rs1[1];
+
+    assign rs2_0 = rs2[0];
+    assign rs2_1 = rs2[1];
+
+    assign rd_0 = rd[0];
+    assign rd_1 = rd[1];
+
+    assign imm_0 = imm[0];
+    assign imm_1 = imm[1];
+
+    assign shift_size_0 = shift_size[0];
+    assign shift_size_1 = shift_size[1];
 
 endmodule

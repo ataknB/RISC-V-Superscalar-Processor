@@ -53,6 +53,9 @@ module Issue_Register (
     input logic [1:0]Branch_en_De[1:0],
     input logic [OPCODE-1:0]op_code_De[1:0],
 
+    input logic [1:0]JAL_en_De,
+    input logic [1:0]JALR_en_De,
+
     output logic [WIDTH-1:0]PC_out_Issue[1:0],
     output logic [1:0]Branch_en_Issue[1:0],
     output logic [RS-1:0] rs1_Issue[1:0],
@@ -68,6 +71,9 @@ module Issue_Register (
     output logic [1:0]mem_write_en_Issue,
     output logic [1:0]sign_extender_en_Issue,
     output logic [1:0]sign_extender_type_Issue[1:0],
+
+    output logic [1:0]JAL_en_Issue,
+    output logic [1:0]JALR_en_Issue,
 
     output logic [OPCODE-1:0]op_code_Issue[1:0],
 
@@ -95,6 +101,8 @@ module Issue_Register (
             op_code_Issue <= '{default: 5'd0};
             PC_out_Issue <= '{default: 32'd0};
             imm_en_Issue <= '{default: 1'd0};
+            JAL_en_Issue <= '{default: 1'd0};
+            JALR_en_Issue <= '{default: 1'd0};
         end
         else
         begin
@@ -114,6 +122,8 @@ module Issue_Register (
             op_code_Issue <= op_code_De;
             PC_out_Issue <= PC_out_De;
             imm_en_Issue <= imm_en_De;
+            JAL_en_Issue <= JAL_en_De;
+            JALR_en_Issue <= JALR_en_De;
         end
     end
 
@@ -263,9 +273,9 @@ module Memory_Register(
     output logic Branch_Pipeline_RF_write_en_out_Mem
 );
 
-always_ff @(posedge clk, posedge rst) 
+always_ff @(posedge clk, negedge rst) 
 begin
-    if (~rst) 
+    if (!rst) 
     begin
         // Reset all outputs to 0
         ALU_Memory_Out_Mem <= 32'd0;

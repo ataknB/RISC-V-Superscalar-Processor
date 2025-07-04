@@ -4,8 +4,10 @@ module RF(
     input logic clk,
     input logic rst,
 
-    input logic [RS-1:0] rs1 [1:0],
-    input logic [RS-1:0] rs2 [1:0],
+    input logic [RS-1:0] rs1_0,
+    input logic [RS-1:0] rs1_1,
+    input logic [RS-1:0] rs2_0,
+    input logic [RS-1:0] rs2_1,
 
     input logic [RS-1:0] rd_Branch,
     input logic [RS-1:0] rd_Memory,
@@ -18,21 +20,31 @@ module RF(
     input logic write_en_Memory,
     input logic write_en_Branch,
 
-    output logic [WIDTH-1:0] rd1 [1:0],
-    output logic [WIDTH-1:0] rd2 [1:0]
+    output logic [WIDTH-1:0] rd1_0,
+    output logic [WIDTH-1:0] rd1_1,
+    output logic [WIDTH-1:0] rd2_0,
+    output logic [WIDTH-1:0] rd2_1
 );
+    logic [RS-1:0] rs1 [1:0],
+    logic [RS-1:0] rs2 [1:0],
+
+    assign rs1[0] = rs1_0;
+    assign rs1[1] = rs1_1;
+
+    assign rs2[0] = rs2_0;
+    assign rs2[1] = rs2_1;
 
     logic [WIDTH-1:0] reg_data [31:0];
 
     // Read operations
-    assign rd1[0] = reg_data[rs1[0]];
-    assign rd1[1] = reg_data[rs1[1]];
+    assign rd1_0 = reg_data[rs1[0]];
+    assign rd1_1 = reg_data[rs1[1]];
 
-    assign rd2[0] = reg_data[rs2[0]];
-    assign rd2[1] = reg_data[rs2[1]];
+    assign rd2_0 = reg_data[rs2[0]];
+    assign rd2_1 = reg_data[rs2[1]];
 
 
-
+    
 
     // Write operations
     always_ff @(negedge clk , negedge rst)

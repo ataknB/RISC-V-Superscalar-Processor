@@ -108,15 +108,18 @@ module Core_Top (
 	logic [ALU_OP-1:0]alu_op_De[1:0];
     logic [1:0]Branch_en_De[1:0];
 
+    logic [1:0]JAL_en_De;
+    logic [1:0]JALR_en_De;
+
 	Control_Unit Control_Unit(
         .op_code(op_code),
         .sub_op_code(sub_op_code),
 		
 		.load_type(load_type_De),
 		.store_type(store_type_De),
-		
-		//.JAL_en(JAL_en_DE),
-		//.JALR_en(JALR_en_DE),
+
+		.JAL_en(JAL_en_De),
+		.JALR_en(JALR_en_De),
         .imm_en(imm_en_De),
         .rf_write_en(rf_write_en_De),
         .mem_read_en(mem_read_en_De),
@@ -150,6 +153,9 @@ module Core_Top (
 
     logic [1:0]imm_en_Issue;
 
+    logic [1:0]JAL_en_Issue;
+    logic [1:0]JALR_en_Issue;
+
 	///////////////////////////////////////
 	Issue_Register Issue_Register (
         .clk(clk),
@@ -176,6 +182,10 @@ module Core_Top (
 
         .Branch_en_De(Branch_en_De),
 
+        .JAL_en_De(JAL_en_De),
+        .JALR_en_De(JALR_en_De),
+
+
         .Branch_en_Issue(Branch_en_Issue),
 
         .PC_out_Issue(PC_out_Issue),
@@ -193,7 +203,10 @@ module Core_Top (
         .sign_extender_en_Issue(sign_extender_en_Issue),
         .sign_extender_type_Issue(sign_extender_type_Issue),
         .op_code_Issue(op_code_Issue),
-        .alu_op_Issue(alu_op_Issue)
+        .alu_op_Issue(alu_op_Issue),
+
+        .JAL_en_Issue(JAL_en_Issue),
+        .JALR_en_Issue(JALR_en_Issue)
     );
 	///////////////////////////////////////
 
@@ -280,8 +293,10 @@ module Core_Top (
         .Mem_Write_en_Issue(mem_write_en_Issue),
         .Sign_Extender_en_Issue(sign_extender_en_Issue),
         .ALU_OP_Issue(alu_op_Issue),
-        //.JAL_en_Issue(JAL_en_Issue),
-        //.JALR_en_Issue(JALR_en_Issue),
+
+        .JAL_en_Issue(JAL_en_Issue),
+        .JALR_en_Issue(JALR_en_Issue),
+
         .Load_Type_Issue(load_type_Issue),
         .Store_Type_Issue(store_type_Issue),
         .Shift_Size(shift_size_Issue),
@@ -289,7 +304,8 @@ module Core_Top (
         .imm_en(imm_en_Issue),
         .rd(rd_Issue),
         .PC(PC_out_Issue),
-        //.Branch_en(Branch_en_Issue),
+
+        .Branch_en(Branch_en_Issue),
 
         .Branch_Pipeline_rs1_out(Branch_Pipeline_rs1_out_Issue),
         .Branch_Pipeline_rs2_out(Branch_Pipeline_rs2_out_Issue),
@@ -613,8 +629,65 @@ module Core_Top (
     );
     ///////////////////////////////////
 
-    
+    Hazard_Unit Hazard_Unit(
+        .rs1_Dec_Branch_Pipeline(rs1_De[0]),
+        .rs1_Dec_Memory_Pipeline(rs1_De[1]),
 
+        .rs1_Issue_Branch_Pipeline(rs1_Issue[0]),
+        .rs1_Issue_Memory_Pipeline(rs1_Issue[1]),
+
+        .rs2_Dec_Branch_Pipeline(rs2_De[0]),
+        .rs2_Dec_Memory_Pipeline(rs2_De[1]),
+
+        .rs2_Issue_Branch_Pipeline(rs2_Issue[0]),
+        .rs2_Issue_Memory_Pipeline(rs2_Issue[1]),
+
+        .rd_Issue_Branch_Pipeline(rd_Issue[0]),
+        .rd_Issue_Memory_Pipeline(rd_Issue[1]),
+
+        .rd_Ex_Branch_Pipeline(Branch_Pipeline_rd_out_Execute),
+        .rd_Ex_Memory_Pipeline(Memory_Pipeline_rd_out_Execute),
+
+        .rd_Mem_Branch_Pipeline(Branch_Pipeline_rd_out_Execute),
+        .rd_Mem_Memory_Pipeline(Memory_Pipeline_rd_out_Execute),
+
+        .rd_Wb_Branch_Pipeline(Branch_Pipeline_rd_Mem),
+        .rd_Wb_Memory_Pipeline(Memory_Pipeline_rd_Mem),
+
+        //.program_counter_controller_EX(),
+        //.Mem_read_en_Ex(),
+
+        .Branch_en(Branch_en_Issue),
+        .Load_Type_Issue(Load_Type_Issue),
+        .Store_Type_Issue(Store_Type_Issue),
+
+        .Branch_Pipeline_RF_Write_en_Ex(Branch_Pipeline_RF_write_en_out_Execute),
+        .Memory_Pipeline_RF_Write_en_Ex(Memory_Pipeline_RF_write_en_out_Execute),
+
+        .Branch_Pipeline_RF_Write_en_Mem(Branch_Pipeline_RF_write_en_out_Mem),
+        .Memory_Pipeline_RF_Write_en_Mem(Memory_Pipeline_RF_write_en_out_Mem),
+
+        .Branch_Pipeline_RF_Write_en_WB(Branch_Pipeline_RF_en_WB),
+        .Memory_Pipeline_RF_Write_en_WB(Memory_Pipeline_RF_en_WB),
+
+        //.branch_control(branch_control),
+        //.branch_decision(branch_decision),
+
+        .Forwarding_Mode_rs1_Branch_Pipeline(),
+        .Forwarding_Mode_rs2_Branch_Pipeline(),
+        .Forwarding_Mode_rs1_Memory_Pipeline(),
+        .Forwarding_Mode_rs2_Memory_Pipeline(),
+
+        //.Branch_Correction(Branch_Correction),
+
+        .Stall_Fetch(Stall_Fetch),
+        .Stall_Dec(Stall_Dec),
+        .Stall_Issue_Branch_Pipeline(Stall_Issue_Branch_Pipeline),
+        .Stall_Issue_Memory_Pipeline(Stall_Issue_Memory_Pipeline),
+
+        .Flush_Ex(Flush_Ex),
+        .Flush_Dec(Flush_Dec)
+    );
     
 
 

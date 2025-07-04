@@ -5,9 +5,18 @@ module PC(
 	
 	input logic stall_F,
 	
-	input logic [WIDTH-1:0]PC_in[1:0],
-	output logic [WIDTH-1:0]PC_out[1:0]
+	input logic [WIDTH-1:0]PC_in_Pipeline_0,
+	input logic [WIDTH-1:0]PC_in_Pipeline_1,
+
+	output logic [WIDTH-1:0]PC_out_Pipeline_0,
+	output logic [WIDTH-1:0]PC_out_Pipeline_1
 );
+
+	logic [WIDTH-1:0]PC_in[1:0];
+	assign PC_in[0] = PC_in_Pipeline_0;
+	assign PC_in[1] = PC_in_Pipeline_1;
+
+	logic [WIDTH-1:0]PC_out[1:0]
 
 	always_ff @(posedge clk or negedge rst)
 	begin
@@ -28,4 +37,7 @@ module PC(
 					PC_out <= PC_in;
 				// end
 	end
+
+	assign PC_out_Pipeline_0 = PC_out[0];
+	assign PC_out_Pipeline_1 = PC_out[1];
 endmodule

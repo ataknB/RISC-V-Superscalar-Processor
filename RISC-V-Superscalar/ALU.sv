@@ -5,8 +5,8 @@ module ALU
 	// 	parameter OP = 4
 	// )
 	(
-		input logic [WIDTH-1:0]rs1, 
-		input logic [WIDTH-1:0]rs2, 
+		input logic [WIDTH-1:0]rd1, 
+		input logic [WIDTH-1:0]rd2, 
 		input logic [ALU_OP-1:0]op, 
 		input logic [4:0]shifter_size,
 	/*
@@ -34,6 +34,12 @@ module ALU
 		output logic [WIDTH-1:0]result,
 		output logic branch_control //1 jump branch 0 - dont jump
 	);
+	
+	logic [WIDTH-1:0]rs1, 
+	logic [WIDTH-1:0]rs2, 
+
+	assign rs1 = rd1,
+	assign rs2 = rd2;
 	
 	logic sub_en;
 	logic [WIDTH-1:0]out_kogge_stone;
@@ -117,31 +123,16 @@ module ALU
 								(op == 4'd8) ? rs1 & rs2	: 32'd0;
 								
 	logic compare_op;
-	//assign compare_op		=	(op == 4'b1101) ? 1'b1: 1'b0;
+
 	
 	logic [31:0]out_compare;
 	assign 	out_compare		=	(compare_op && out_kogge_stone[31] && !overflow) ? 32'd1 : 32'd0;
-	/*
-	assign result 			=	(arithmetic_op) ? 	out_kogge_stone : 
-								(logic_op)		? 	out_logic		: 
-								(shifting_op)	?	out_shifter		:
-								(compare_op)	?	out_compare     :
-								32'd0;
-	*/		
+	
 	logic arithmetic_op;
-	/*assign arithmetic_op 	= 	( (op == 4'b0000) || (op == 4'b0001) ) ? 1'b1: 1'b0;*/
-	
-	logic logic_op;
-	/*assign logic_op			=	(op == 4'b0110) || (op == 4'b0111) ||(op == 4'b1000) ? 1'b1: 1'b0;*/
-								
+	logic logic_op;							
 	logic branch_op;
-	/*assign branch_op		=	(op == 4'b1001) || (op == 4'b1010) ||  
-								(op == 4'b1011) || (op == 4'b1100) ? 1'b1: 1'b0; */
-								
-	
 	logic shifting_op;
-	/*assign shifting_op		=	(op == 4'b0010) || (op == 4'b0011) || 
-								(op == 4'b0100) || (op == 4'b0101) ? 1'b1: 1'b0;*/
+
 	
 	always_comb
 	begin
